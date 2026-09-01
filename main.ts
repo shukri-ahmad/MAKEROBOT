@@ -149,7 +149,6 @@ namespace MAKEROBOT {
      * In JS: robotLineFollowUntil(until, speed, stopDelay)
      */
     //% block="robot line follow until %until"
-    //% until.defl=MAKEROBOTLineFollowUntil.Cross
     //% group="Movement"
     //% weight=90
     //% subcategory="Tracer Junior"
@@ -177,7 +176,6 @@ namespace MAKEROBOT {
      * In JS: robotTurn(move, speed)
      */
     //% block="robot turn %move"
-    //% move.defl=MAKEROBOTMove.Left
     //% group="Movement"
     //% weight=80
     //% subcategory="Tracer Junior"
