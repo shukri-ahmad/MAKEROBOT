@@ -100,8 +100,15 @@ namespace MAKEROBOT {
     let pidKp = 0.6
     let pidKd = 0.4
     let pidKi = 0
-    let leftMotorChannel = MotionBitMotorChannel.M1
-    let rightMotorChannel = MotionBitMotorChannel.M3
+    
+    // Left side controls M1 & M2
+    let leftMotorChannel1 = MotionBitMotorChannel.M1
+    let leftMotorChannel2 = MotionBitMotorChannel.M2
+    
+    // Right side controls M3 & M4
+    let rightMotorChannel1 = MotionBitMotorChannel.M3
+    let rightMotorChannel2 = MotionBitMotorChannel.M4
+    
     let makerLineD1 = DigitalPin.P16
     let makerLineD2 = DigitalPin.P15
     let makerLineD3 = DigitalPin.P14
@@ -128,45 +135,51 @@ namespace MAKEROBOT {
     /**
      * Calibrate the robot line sensor using default settings.
      */
-    //% block="robot calibration"
+    //% block="robot calibration || speed %speed"
+    //% speed.min=0 speed.max=255 speed.defl=120
     //% group="Setup"
     //% weight=100
     //% subcategory="Tracer Junior"
-    export function juniorRobotCalibration(): void {
-        robotCalibration(MAKEROBOTCalibrationPin.P9, 120)
+    //% expandableArgumentMode="toggle"
+    export function juniorRobotCalibration(speed: number = 120): void {
+        robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
 
     /**
      * Follow the line until the robot reaches a cross or obstacle.
      */
-    //% block="robot line follow until %until"
+    //% block="robot line follow until %until || speed %speed"
     //% until.defl=MAKEROBOTLineFollowUntil.Cross
+    //% speed.min=0 speed.max=255 speed.defl=150
     //% group="Movement"
     //% weight=90
     //% subcategory="Tracer Junior"
-    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil): void {
+    //% expandableArgumentMode="toggle"
+    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150): void {
         setPidTuning(500, 0.6, 0.4, 0)
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
-            lineFollowUntilObstacleWithPin(AnalogReadWritePin.P0, 150, 10)
+            lineFollowUntilObstacleWithPin(AnalogReadWritePin.P0, speed, 10)
         } else {
-            lineFollowWithPin(AnalogReadWritePin.P0, 150, true, 500)
+            lineFollowWithPin(AnalogReadWritePin.P0, speed, true, 500)
         }
     }
 
     /**
      * Go left or right from the current line position.
      */
-    //% block="robot turn %move"
+    //% block="robot turn %move || speed %speed"
     //% move.defl=MAKEROBOTMove.Left
+    //% speed.min=0 speed.max=255 speed.defl=150
     //% group="Movement"
     //% weight=80
     //% subcategory="Tracer Junior"
-    export function robotTurn(move: MAKEROBOTMove): void {
+    //% expandableArgumentMode="toggle"
+    export function robotTurn(move: MAKEROBOTMove, speed: number = 150): void {
         if (move == MAKEROBOTMove.Right) {
-            turnToLineWithPin(MAKEROBOTTurnDirection.Right, 150, AnalogReadWritePin.P0)
+            turnToLineWithPin(MAKEROBOTTurnDirection.Right, speed, AnalogReadWritePin.P0)
         } else if (move == MAKEROBOTMove.Left) {
-            turnToLineWithPin(MAKEROBOTTurnDirection.Left, 150, AnalogReadWritePin.P0)
+            turnToLineWithPin(MAKEROBOTTurnDirection.Left, speed, AnalogReadWritePin.P0)
         }
     }
 
@@ -184,31 +197,17 @@ namespace MAKEROBOT {
         const calibrationPin = calibrationPinValue(pin)
 
         enterCalibration(calibrationPin)
-        runMotorSigned(leftMotorChannel, -motorSpeed)
-        runMotorSigned(rightMotorChannel, motorSpeed)
+        runMotorSignedLeft(-motorSpeed)
+        runMotorSignedRight(motorSpeed)
         basic.pause(1000)
-        runMotorSigned(leftMotorChannel, motorSpeed)
-        runMotorSigned(rightMotorChannel, -motorSpeed)
+        runMotorSignedLeft(motorSpeed)
+        runMotorSignedRight(-motorSpeed)
         basic.pause(2000)
-        runMotorSigned(leftMotorChannel, -motorSpeed)
-        runMotorSigned(rightMotorChannel, motorSpeed)
+        runMotorSignedLeft(-motorSpeed)
+        runMotorSignedRight(motorSpeed)
         basic.pause(1000)
         robotStop()
         exitCalibration(calibrationPin)
-    }
-
-    /**
-     * Set the left and right motor channels.
-     */
-    //% block="set motor left %left right %right"
-    //% left.defl=MotionBitMotorChannel.M1
-    //% right.defl=MotionBitMotorChannel.M3
-    //% group="Setup"
-    //% weight=100
-    //% subcategory="Tracer Senior"
-    export function setMotor(left: MotionBitMotorChannel, right: MotionBitMotorChannel): void {
-        leftMotorChannel = left
-        rightMotorChannel = right
     }
 
     /**
@@ -223,8 +222,8 @@ namespace MAKEROBOT {
     //% weight=80
     //% subcategory="Tracer Senior"
     export function setMotorsSpeed(leftSpeed: number, rightSpeed: number, delay: number): void {
-        runMotorSigned(leftMotorChannel, leftSpeed)
-        runMotorSigned(rightMotorChannel, rightSpeed)
+        runMotorSignedLeft(leftSpeed)
+        runMotorSignedRight(rightSpeed)
 
         if (delay > 0) {
             basic.pause(delay)
@@ -366,8 +365,10 @@ namespace MAKEROBOT {
     //% subcategory="Tracer Expert"
     //% blockHidden=true
     export function robotStop(): void {
-        motionbit.brakeMotor(leftMotorChannel)
-        motionbit.brakeMotor(rightMotorChannel)
+        motionbit.brakeMotor(leftMotorChannel1)
+        motionbit.brakeMotor(leftMotorChannel2)
+        motionbit.brakeMotor(rightMotorChannel1)
+        motionbit.brakeMotor(rightMotorChannel2)
     }
 
     function lineFollowWithPin(pin: AnalogReadWritePin, speed: number, cross: boolean, stopTimer: number): void {
@@ -485,11 +486,11 @@ namespace MAKEROBOT {
         const motorSpeed = limit(speed, 0, 255)
 
         if (direction == MAKEROBOTTurnDirection.Left) {
-            runMotorSigned(leftMotorChannel, -motorSpeed)
-            runMotorSigned(rightMotorChannel, motorSpeed)
+            runMotorSignedLeft(-motorSpeed)
+            runMotorSignedRight(motorSpeed)
         } else {
-            runMotorSigned(leftMotorChannel, motorSpeed)
-            runMotorSigned(rightMotorChannel, -motorSpeed)
+            runMotorSignedLeft(motorSpeed)
+            runMotorSignedRight(-motorSpeed)
         }
 
         while (pins.analogReadPin(pin) >= 81) {
@@ -516,17 +517,31 @@ namespace MAKEROBOT {
     }
 
     function runLineMotors(speedLeft: number, speedRight: number): void {
-        runMotorSigned(leftMotorChannel, limit(speedLeft, 0, 255))
-        runMotorSigned(rightMotorChannel, limit(speedRight, 0, 255))
+        runMotorSignedLeft(limit(speedLeft, 0, 255))
+        runMotorSignedRight(limit(speedRight, 0, 255))
     }
 
-    function runMotorSigned(channel: MotionBitMotorChannel, speed: number): void {
+    function runMotorSignedLeft(speed: number): void {
         const motorSpeed = limit(Math.abs(speed), 0, 255)
 
         if (speed >= 0) {
-            motionbit.runMotor(channel, MotionBitMotorDirection.Forward, motorSpeed)
+            motionbit.runMotor(leftMotorChannel1, MotionBitMotorDirection.Forward, motorSpeed)
+            motionbit.runMotor(leftMotorChannel2, MotionBitMotorDirection.Forward, motorSpeed)
         } else {
-            motionbit.runMotor(channel, MotionBitMotorDirection.Backward, motorSpeed)
+            motionbit.runMotor(leftMotorChannel1, MotionBitMotorDirection.Backward, motorSpeed)
+            motionbit.runMotor(leftMotorChannel2, MotionBitMotorDirection.Backward, motorSpeed)
+        }
+    }
+
+    function runMotorSignedRight(speed: number): void {
+        const motorSpeed = limit(Math.abs(speed), 0, 255)
+
+        if (speed >= 0) {
+            motionbit.runMotor(rightMotorChannel1, MotionBitMotorDirection.Forward, motorSpeed)
+            motionbit.runMotor(rightMotorChannel2, MotionBitMotorDirection.Forward, motorSpeed)
+        } else {
+            motionbit.runMotor(rightMotorChannel1, MotionBitMotorDirection.Backward, motorSpeed)
+            motionbit.runMotor(rightMotorChannel2, MotionBitMotorDirection.Backward, motorSpeed)
         }
     }
 
