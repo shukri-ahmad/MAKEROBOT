@@ -134,28 +134,26 @@ namespace MAKEROBOT {
 
     /**
      * Calibrate the robot line sensor using default settings.
+     * In JS: juniorRobotCalibration(speed)
      */
-    //% block="robot calibration || speed %speed"
-    //% speed.min=0 speed.max=255 speed.defl=120
+    //% block="robot calibration"
     //% group="Setup"
     //% weight=100
     //% subcategory="Tracer Junior"
-    //% expandableArgumentMode="toggle"
     export function juniorRobotCalibration(speed: number = 120): void {
         robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
 
     /**
      * Follow the line until the robot reaches a cross or obstacle.
+     * In JS: robotLineFollowUntil(until, speed, stopDelay)
      */
-    //% block="robot line follow until %until || speed %speed"
+    //% block="robot line follow until %until"
     //% until.defl=MAKEROBOTLineFollowUntil.Cross
-    //% speed.min=0 speed.max=255 speed.defl=150
     //% group="Movement"
     //% weight=90
     //% subcategory="Tracer Junior"
-    //% expandableArgumentMode="toggle"
-   export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150, stopDelay: number = 0): void {
+    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
         let finalDelay = stopDelay;
@@ -163,8 +161,8 @@ namespace MAKEROBOT {
         // If delay is left at 0, calculate it automatically using an aggressive slope
         if (finalDelay == 0) {
             // Speed 0 = 1200ms, Speed 150 = ~550ms, Speed 255 = 100ms
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 0));
-            finalDelay = Math.clamp( 0, 2000, finalDelay);
+            finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
+            finalDelay = Math.clamp(50, 2000, finalDelay);
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
@@ -176,14 +174,13 @@ namespace MAKEROBOT {
 
     /**
      * Go left or right from the current line position.
+     * In JS: robotTurn(move, speed)
      */
-    //% block="robot turn %move || speed %speed"
+    //% block="robot turn %move"
     //% move.defl=MAKEROBOTMove.Left
-    //% speed.min=0 speed.max=255 speed.defl=150
     //% group="Movement"
     //% weight=80
     //% subcategory="Tracer Junior"
-    //% expandableArgumentMode="toggle"
     export function robotTurn(move: MAKEROBOTMove, speed: number = 150): void {
         if (move == MAKEROBOTMove.Right) {
             turnToLineWithPin(MAKEROBOTTurnDirection.Right, speed, AnalogReadWritePin.P0)
