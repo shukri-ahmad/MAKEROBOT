@@ -1,5 +1,5 @@
 
-> Open this page at [https://idriszmy.github.io/pxt-makerobot/](https://idriszmy.github.io/pxt-makerobot/)
+
 
 ## Use as Extension
 
