@@ -157,11 +157,14 @@ namespace MAKEROBOT {
     //% expandableArgumentMode="toggle"
     export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150): void {
         setPidTuning(500, 0.6, 0.4, 0)
+        
+        // Automatically scale the cross delay timer based on the current speed
+        let autoTimer = Math.idiv(75000, Math.max(1, speed))
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
             lineFollowUntilObstacleWithPin(AnalogReadWritePin.P0, speed, 10)
         } else {
-            lineFollowWithPin(AnalogReadWritePin.P0, speed, true, 500)
+            lineFollowWithPin(AnalogReadWritePin.P0, speed, true, autoTimer)
         }
     }
 
