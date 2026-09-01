@@ -1,6 +1,6 @@
 {
-    "name": "MakeRobot",
-    "description": "MakeCode micro:bit extension for MakeRobot tracer activities with junior, senior, and expert blocks.",
+    "name": "MAKEROBOT",
+    "description": "MakeCode micro:bit extension for MAKEROBOT TRACER",
     "dependencies": {
         "core": "*",
 
