@@ -163,8 +163,8 @@ namespace MAKEROBOT {
         // If delay is left at 0, calculate it automatically using an aggressive slope
         if (finalDelay == 0) {
             // Speed 0 = 1200ms, Speed 150 = ~550ms, Speed 255 = 100ms
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 10));
-            finalDelay = Math.clamp(10, 2000, finalDelay);
+            finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 0));
+            finalDelay = Math.clamp( 0, 2000, finalDelay);
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
