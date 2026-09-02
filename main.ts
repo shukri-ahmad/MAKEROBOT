@@ -131,6 +131,13 @@ enum MAKEROBOTRocker {
     Press
 }
 
+enum MAKEROBOTAxis {
+    //% block="pitch"
+    Pitch,
+    //% block="roll"
+    Roll
+}
+
 // --- NEW BLITZ ROBOT ENUMS ---
 enum BLITZMove {
     //% block="forward"
@@ -553,15 +560,48 @@ namespace MAKEROBOT {
         return temp;
     }
 
+    /**
+     * Read the pitch or roll of the remote and map it to a specific output range.
+     */
+    //% block="remote motion %axis angle from %startAngle to %endAngle map to %outStart to %outEnd"
+    //% startAngle.defl=-90 endAngle.defl=90
+    //% outStart.defl=-255 outEnd.defl=255
+    //% inlineInputMode=inline
+    //% subcategory="BLITZ Remote"
+    //% weight=80
+    export function blitzRemoteMotion(axis: MAKEROBOTAxis, startAngle: number, endAngle: number, outStart: number, outEnd: number): number {
+        let angle = 0;
+        
+        if (axis == MAKEROBOTAxis.Pitch) {
+            angle = input.rotation(Rotation.Pitch);
+        } else {
+            angle = input.rotation(Rotation.Roll);
+        }
+        
+        // Ensure angle is clamped between the user's start and end angles
+        let minAngle = Math.min(startAngle, endAngle);
+        let maxAngle = Math.max(startAngle, endAngle);
+        let constrainedAngle = Math.clamp(minAngle, maxAngle, angle);
+        
+        // Map the angle to the output range
+        let mapped = pins.map(constrainedAngle, startAngle, endAngle, outStart, outEnd);
+        
+        // Clamp the final output just in case of weird math bounds
+        let minOut = Math.min(outStart, outEnd);
+        let maxOut = Math.max(outStart, outEnd);
+        
+        return Math.clamp(minOut, maxOut, Math.trunc(mapped));
+    }
+
 
     // ==========================================
     // BLITZ ROBOT BLOCKS
     // ==========================================
 
     /**
-     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo to save and exit.
+     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo or A+B to save and exit.
      */
-    //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
+    //% block="BLITZ calibrate alignment (A/B to adjust, Logo or A+B to save)"
     //% subcategory="BLITZ Robot"
     //% group="Setup"
     //% weight=105
@@ -579,19 +619,34 @@ namespace MAKEROBOT {
 
             if (input.logoIsPressed()) {
                 exitTriggered = true;
+            } else if (input.buttonIsPressed(Button.A) && input.buttonIsPressed(Button.B)) {
+                // Direct physical check for A+B
+                exitTriggered = true;
             } else if (input.buttonIsPressed(Button.A)) {
-                robotTrim = limit(robotTrim - 5, -50, 50);
-                showTrimLed();
-                // Wait until A is released to prevent runaway scrolling
-                while(input.buttonIsPressed(Button.A)) {
-                    basic.pause(10);
+                // Grace period for A+B overlap
+                basic.pause(50); 
+                if (input.buttonIsPressed(Button.B)) {
+                    exitTriggered = true;
+                } else {
+                    robotTrim = limit(robotTrim - 5, -50, 50);
+                    showTrimLed();
+                    // Wait until A is released to prevent runaway scrolling
+                    while(input.buttonIsPressed(Button.A) && !input.buttonIsPressed(Button.B)) {
+                        basic.pause(10);
+                    }
                 }
             } else if (input.buttonIsPressed(Button.B)) {
-                robotTrim = limit(robotTrim + 5, -50, 50);
-                showTrimLed();
-                // Wait until B is released
-                while(input.buttonIsPressed(Button.B)) {
-                    basic.pause(10);
+                // Grace period for A+B overlap
+                basic.pause(50);
+                if (input.buttonIsPressed(Button.A)) {
+                    exitTriggered = true;
+                } else {
+                    robotTrim = limit(robotTrim + 5, -50, 50);
+                    showTrimLed();
+                    // Wait until B is released
+                    while(input.buttonIsPressed(Button.B) && !input.buttonIsPressed(Button.A)) {
+                        basic.pause(10);
+                    }
                 }
             }
 
