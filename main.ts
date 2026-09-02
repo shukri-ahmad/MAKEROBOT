@@ -89,6 +89,48 @@ enum MAKEROBOTTurnDirection {
     Right
 }
 
+// --- NEW REMOTE ENUMS ---
+enum MAKEROBOTRemoteButton {
+    //% block="B1"
+    B1,
+    //% block="B2"
+    B2,
+    //% block="B3"
+    B3,
+    //% block="B4"
+    B4
+}
+
+enum MAKEROBOTButtonState {
+    //% block="pressed"
+    Press = 0,
+    //% block="released"
+    Release = 1
+}
+
+enum MAKEROBOTRocker {
+    //% block="none"
+    None,
+    //% block="up"
+    Up,
+    //% block="down"
+    Down,
+    //% block="left"
+    Left,
+    //% block="right"
+    Right,
+    //% block="up-left"
+    UpLeft,
+    //% block="up-right"
+    UpRight,
+    //% block="down-left"
+    DownLeft,
+    //% block="down-right"
+    DownRight,
+    //% block="pressed"
+    Press
+}
+
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
 //% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Remote", "BLITZ Robot"]
@@ -390,17 +432,89 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
-     * Example BLITZ Remote Block
+     * Check the state of the gamepad rocker (joystick).
      */
-    //% block="BLITZ connect remote"
+    //% block="remote rocker %value"
     //% subcategory="BLITZ Remote"
     //% weight=100
-    export function blitzRemoteConnect(): void {
-        // Add your remote code here!
+    export function blitzRemoteRocker(value: MAKEROBOTRocker): boolean {
+        pins.setPull(DigitalPin.P8, PinPullMode.PullUp);
+        let x = pins.analogReadPin(AnalogPin.P1);
+        let y = pins.analogReadPin(AnalogPin.P2);
+        let z = pins.digitalReadPin(DigitalPin.P8);
+        
+        let now_state = MAKEROBOTRocker.None;
+        
+        let isUp = x < 200;
+        let isDown = x > 730;
+        let isRight = y < 200;
+        let isLeft = y > 730;
+
+        // Check for diagonal combinations first
+        if (isUp && isRight) {
+            now_state = MAKEROBOTRocker.UpRight;
+        } else if (isDown && isRight) {
+            now_state = MAKEROBOTRocker.DownRight;
+        } else if (isDown && isLeft) {
+            now_state = MAKEROBOTRocker.DownLeft;
+        } else if (isUp && isLeft) {
+            now_state = MAKEROBOTRocker.UpLeft;
+        } 
+        // If not diagonal, check primary directions
+        else if (isUp) {
+            now_state = MAKEROBOTRocker.Up;
+        } else if (isDown) {
+            now_state = MAKEROBOTRocker.Down;
+        } else if (isRight) {
+            now_state = MAKEROBOTRocker.Right;
+        } else if (isLeft) {
+            now_state = MAKEROBOTRocker.Left;
+        }
+        
+        // Button press overrides movement directions
+        if (z == 0) {
+            now_state = MAKEROBOTRocker.Press;
+        }
+        
+        return now_state == value;
     }
 
+    /**
+     * Check the state of the gamepad buttons.
+     */
+    //% block="remote button %num is %value"
+    //% subcategory="BLITZ Remote"
+    //% weight=90
+    export function blitzRemoteButton(num: MAKEROBOTRemoteButton, value: MAKEROBOTButtonState): boolean {
+        let temp = false;
+        switch (num) {
+            case MAKEROBOTRemoteButton.B1: {
+                pins.setPull(DigitalPin.P13, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P13) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B2: {
+                pins.setPull(DigitalPin.P14, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P14) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B3: {
+                pins.setPull(DigitalPin.P15, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P15) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B4: {
+                pins.setPull(DigitalPin.P16, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P16) == value) { temp = true; }
+                break;
+            }
+        }
+        return temp;
+    }
+
+
     // ==========================================
-    // BLITZ ROBOT BLOCKS
+    // BLITZ ROBOT BLOCKS (Placeholder)
     // ==========================================
 
     /**
