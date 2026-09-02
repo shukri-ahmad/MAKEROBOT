@@ -203,12 +203,14 @@ namespace MAKEROBOT {
     let ultrasonicDistance = 255
     let ultrasonicEnabled = false
     let ultrasonicDivisor = control.hardwareVersion() == "1" ? 39 : 58
+    
+    // Robot Alignment (Trim)
+    let robotTrim = 0
 
     control.inBackground(function () {
         while (true) {
             if (ultrasonicEnabled) {
                 readUltrasonicNow()
-
                 basic.pause(200)
             } else {
                 basic.pause(50)
@@ -557,6 +559,43 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
+     * Enter alignment calibration mode. Press A/B to adjust trim, and A+B to save and exit.
+     */
+    //% block="BLITZ calibrate alignment (A/B to adjust, A+B to save)"
+    //% subcategory="BLITZ Robot"
+    //% group="Setup"
+    //% weight=105
+    export function blitzCalibrateAlignment(): void {
+        let calibrating = true;
+        showTrimLed();
+        
+        // This loop pauses the code here until the user presses A+B to save and exit
+        while (calibrating) {
+            if (input.buttonIsPressed(Button.AB)) {
+                calibrating = false;
+                basic.showIcon(IconNames.Yes);
+                basic.pause(1000);
+                basic.clearScreen();
+                
+                // Debounce so the A+B press doesn't trigger anything else immediately
+                while (input.buttonIsPressed(Button.AB)) {
+                    basic.pause(10);
+                }
+            } else if (input.buttonIsPressed(Button.A)) {
+                robotTrim = limit(robotTrim - 5, -20, 20);
+                showTrimLed();
+                basic.pause(200);
+            } else if (input.buttonIsPressed(Button.B)) {
+                robotTrim = limit(robotTrim + 5, -20, 20);
+                showTrimLed();
+                basic.pause(200);
+            }
+            
+            basic.pause(50);
+        }
+    }
+
+    /**
      * Move the BLITZ robot in a standard direction.
      */
     //% block="BLITZ robot move %direction at speed %speed"
@@ -565,21 +604,29 @@ namespace MAKEROBOT {
     //% group="Movement"
     //% weight=100
     export function blitzRobotMove(direction: BLITZMove, speed: number = 150): void {
-        const motorSpeed = limit(speed, 0, 255);
-        
-        if (direction == BLITZMove.Forward) {
-            runMotorSignedLeft(motorSpeed);
-            runMotorSignedRight(motorSpeed);
-        } else if (direction == BLITZMove.Backward) {
-            runMotorSignedLeft(-motorSpeed);
-            runMotorSignedRight(-motorSpeed);
-        } else if (direction == BLITZMove.TurnLeft) {
-            runMotorSignedLeft(-motorSpeed);
-            runMotorSignedRight(motorSpeed);
-        } else if (direction == BLITZMove.TurnRight) {
-            runMotorSignedLeft(motorSpeed);
-            runMotorSignedRight(-motorSpeed);
+        const baseSpeed = limit(speed, 0, 255);
+        let leftSpeed = baseSpeed;
+        let rightSpeed = baseSpeed;
+
+        // Apply alignment trim to straight movements
+        if (direction == BLITZMove.Forward || direction == BLITZMove.Backward) {
+            leftSpeed += (robotTrim < 0 ? robotTrim : 0);
+            rightSpeed -= (robotTrim > 0 ? robotTrim : 0);
         }
+        
+        if (direction == BLITZMove.Backward) {
+            leftSpeed = -leftSpeed;
+            rightSpeed = -rightSpeed;
+        } else if (direction == BLITZMove.TurnLeft) {
+            leftSpeed = -baseSpeed;
+            rightSpeed = baseSpeed;
+        } else if (direction == BLITZMove.TurnRight) {
+            leftSpeed = baseSpeed;
+            rightSpeed = -baseSpeed;
+        }
+
+        runMotorSignedLeft(leftSpeed);
+        runMotorSignedRight(rightSpeed);
     }
 
     /**
@@ -592,21 +639,23 @@ namespace MAKEROBOT {
     //% group="Movement"
     //% weight=95
     export function blitzRobotCorner(direction: BLITZDirection, corner: BLITZCorner, radius: number, speed: number): void {
-        const motorSpeed = limit(speed, 0, 255);
-        
-        // Calculate the speed of the inner wheels based on the radius percentage
-        const innerSpeed = Math.trunc(motorSpeed * (limit(radius, 0, 100) / 100));
+        const baseSpeed = limit(speed, 0, 255);
+        const innerSpeed = Math.trunc(baseSpeed * (limit(radius, 0, 100) / 100));
         
         let leftSpeed = 0;
         let rightSpeed = 0;
 
         if (corner == BLITZCorner.Left) {
             leftSpeed = innerSpeed;
-            rightSpeed = motorSpeed;
+            rightSpeed = baseSpeed;
         } else {
-            leftSpeed = motorSpeed;
+            leftSpeed = baseSpeed;
             rightSpeed = innerSpeed;
         }
+
+        // Apply alignment trim
+        leftSpeed += (robotTrim < 0 ? robotTrim : 0);
+        rightSpeed -= (robotTrim > 0 ? robotTrim : 0);
 
         if (direction == BLITZDirection.Backward) {
             leftSpeed = -leftSpeed;
@@ -675,6 +724,27 @@ namespace MAKEROBOT {
     // ==========================================
     // INTERNAL FUNCTIONS (HIDDEN)
     // ==========================================
+
+    function showTrimLed(): void {
+        // Map the -20 to 20 range onto the 5 horizontal LEDs
+        let x = 2;
+        if (robotTrim < -10) x = 0;
+        else if (robotTrim < 0) x = 1;
+        else if (robotTrim > 10) x = 4;
+        else if (robotTrim > 0) x = 3;
+
+        basic.clearScreen();
+        
+        // Draw the horizontal axle line
+        for (let i = 0; i < 5; i++) {
+            led.plot(i, 2); 
+        }
+        
+        // Draw the steering column and center reference
+        led.plot(x, 1);
+        led.plot(x, 0); 
+        led.plot(2, 3); 
+    }
 
     function lineFollowWithPin(pin: AnalogReadWritePin, speed: number, cross: boolean, stopTimer: number): void {
         const baseSpeed = limit(speed, 0, 255)
