@@ -559,9 +559,9 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
-     * Enter alignment calibration mode. Press A/B to adjust trim, and A+B to save and exit.
+     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo to save and exit.
      */
-    //% block="BLITZ calibrate alignment (A/B to adjust, A+B to save)"
+    //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
     //% subcategory="BLITZ Robot"
     //% group="Setup"
     //% weight=105
@@ -570,24 +570,24 @@ namespace MAKEROBOT {
         showTrimLed();
         
         while (calibrating) {
-            if (input.buttonIsPressed(Button.AB)) {
+            if (input.logoIsPressed()) {
                 calibrating = false;
                 basic.showIcon(IconNames.Yes);
                 basic.pause(1000);
                 basic.clearScreen();
                 
-                // Debounce
-                while (input.buttonIsPressed(Button.AB)) {
+                // Debounce to prevent immediate double-touches
+                while (input.logoIsPressed()) {
                     basic.pause(10);
                 }
             } else if (input.buttonIsPressed(Button.A)) {
-                // Boosted trim adjustment: steps of 10, max of 100
-                robotTrim = limit(robotTrim - 10, -100, 100);
+                // Finer trim adjustment: steps of 5, max of 50
+                robotTrim = limit(robotTrim - 5, -50, 50);
                 showTrimLed();
                 basic.pause(200);
             } else if (input.buttonIsPressed(Button.B)) {
-                // Boosted trim adjustment: steps of 10, max of 100
-                robotTrim = limit(robotTrim + 10, -100, 100);
+                // Finer trim adjustment: steps of 5, max of 50
+                robotTrim = limit(robotTrim + 5, -50, 50);
                 showTrimLed();
                 basic.pause(200);
             }
@@ -733,11 +733,11 @@ namespace MAKEROBOT {
     // ==========================================
 
     function showTrimLed(): void {
-        // Map the -100 to 100 range onto the 5 horizontal LEDs
+        // Map the -50 to 50 range onto the 5 horizontal LEDs
         let x = 2;
-        if (robotTrim <= -40) x = 0;
+        if (robotTrim <= -20) x = 0;
         else if (robotTrim < 0) x = 1;
-        else if (robotTrim >= 40) x = 4;
+        else if (robotTrim >= 20) x = 4;
         else if (robotTrim > 0) x = 3;
 
         basic.clearScreen();
