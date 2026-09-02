@@ -1,6 +1,6 @@
 {
     "name": "MAKEROBOT",
-    "description": "MakeCode micro:bit extension for MAKEROBOT",
+    "description": "MakeCode micro:bit extension for UTHM MAKEROBOT:TRACER and MAKEROBOT:BLITZ",
     "dependencies": {
         "core": "*",
 
