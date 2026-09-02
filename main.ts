@@ -1,5 +1,5 @@
 /**
- * MAKEROBOT
+ * MAKEROBOT v0.0.1
  */
 enum MAKEROBOTMove {
     //% block="left"
