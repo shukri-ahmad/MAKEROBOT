@@ -559,40 +559,69 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
-     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo to save and exit.
+     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo or A+B to save and exit.
      */
-    //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
+    //% block="BLITZ calibrate alignment (A/B to adjust, Logo or A+B to save)"
     //% subcategory="BLITZ Robot"
     //% group="Setup"
     //% weight=105
     export function blitzCalibrateAlignment(): void {
+        // ANTI-BOUNCE: If triggered via a button event, wait for release first
+        while (input.buttonIsPressed(Button.A) || input.buttonIsPressed(Button.B) || input.logoIsPressed()) {
+            basic.pause(10);
+        }
+
         let calibrating = true;
         showTrimLed();
         
         while (calibrating) {
+            let exitTriggered = false;
+
             if (input.logoIsPressed()) {
+                exitTriggered = true;
+            } else if (input.buttonIsPressed(Button.A) && input.buttonIsPressed(Button.B)) {
+                // Direct physical check for A+B
+                exitTriggered = true;
+            } else if (input.buttonIsPressed(Button.A)) {
+                // Grace period for A+B overlap
+                basic.pause(50); 
+                if (input.buttonIsPressed(Button.B)) {
+                    exitTriggered = true;
+                } else {
+                    robotTrim = limit(robotTrim - 5, -50, 50);
+                    showTrimLed();
+                    // Wait until A is released to prevent runaway scrolling
+                    while(input.buttonIsPressed(Button.A) && !input.buttonIsPressed(Button.B)) {
+                        basic.pause(10);
+                    }
+                }
+            } else if (input.buttonIsPressed(Button.B)) {
+                // Grace period for A+B overlap
+                basic.pause(50);
+                if (input.buttonIsPressed(Button.A)) {
+                    exitTriggered = true;
+                } else {
+                    robotTrim = limit(robotTrim + 5, -50, 50);
+                    showTrimLed();
+                    // Wait until B is released
+                    while(input.buttonIsPressed(Button.B) && !input.buttonIsPressed(Button.A)) {
+                        basic.pause(10);
+                    }
+                }
+            }
+
+            if (exitTriggered) {
                 calibrating = false;
                 basic.showIcon(IconNames.Yes);
                 basic.pause(1000);
                 basic.clearScreen();
-                
-                // Debounce to prevent immediate double-touches
-                while (input.logoIsPressed()) {
+                // Wait for all buttons to be fully released before exiting the function
+                while (input.buttonIsPressed(Button.A) || input.buttonIsPressed(Button.B) || input.logoIsPressed()) {
                     basic.pause(10);
                 }
-            } else if (input.buttonIsPressed(Button.A)) {
-                // Finer trim adjustment: steps of 5, max of 50
-                robotTrim = limit(robotTrim - 5, -50, 50);
-                showTrimLed();
-                basic.pause(200);
-            } else if (input.buttonIsPressed(Button.B)) {
-                // Finer trim adjustment: steps of 5, max of 50
-                robotTrim = limit(robotTrim + 5, -50, 50);
-                showTrimLed();
-                basic.pause(200);
             }
             
-            basic.pause(50);
+            basic.pause(10);
         }
     }
 
