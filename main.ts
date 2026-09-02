@@ -131,10 +131,30 @@ enum MAKEROBOTRocker {
     Press
 }
 
+// --- NEW BLITZ ROBOT ENUMS ---
+enum BLITZMove {
+    //% block="forward"
+    Forward,
+    //% block="backward"
+    Backward,
+    //% block="turn left"
+    TurnLeft,
+    //% block="turn right"
+    TurnRight
+}
+
+enum BLITZMecanum {
+    //% block="left"
+    Left,
+    //% block="right"
+    Right
+}
+
+
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
 //% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Remote", "BLITZ Robot"]
-//% groups=["Setup", "Movement", "Sensors"]
+//% groups=["Setup", "Movement", "Sensors", "Mecanum"]
 namespace MAKEROBOT {
     let lastError = 0
     let integral = 0
@@ -450,7 +470,6 @@ namespace MAKEROBOT {
         let isRight = y < 200;
         let isLeft = y > 730;
 
-        // Check for diagonal combinations first
         if (isUp && isRight) {
             now_state = MAKEROBOTRocker.UpRight;
         } else if (isDown && isRight) {
@@ -460,7 +479,6 @@ namespace MAKEROBOT {
         } else if (isUp && isLeft) {
             now_state = MAKEROBOTRocker.UpLeft;
         } 
-        // If not diagonal, check primary directions
         else if (isUp) {
             now_state = MAKEROBOTRocker.Up;
         } else if (isDown) {
@@ -471,7 +489,6 @@ namespace MAKEROBOT {
             now_state = MAKEROBOTRocker.Left;
         }
         
-        // Button press overrides movement directions
         if (z == 0) {
             now_state = MAKEROBOTRocker.Press;
         }
@@ -514,17 +531,70 @@ namespace MAKEROBOT {
 
 
     // ==========================================
-    // BLITZ ROBOT BLOCKS (Placeholder)
+    // BLITZ ROBOT BLOCKS
     // ==========================================
 
     /**
-     * Example BLITZ Robot Block
+     * Move the BLITZ robot in a standard direction.
      */
-    //% block="BLITZ drive forward"
+    //% block="BLITZ robot move %direction at speed %speed"
+    //% speed.min=0 speed.max=255 speed.defl=150
     //% subcategory="BLITZ Robot"
+    //% group="Movement"
     //% weight=100
-    export function blitzDriveForward(): void {
-        // Add your robot code here!
+    export function blitzRobotMove(direction: BLITZMove, speed: number = 150): void {
+        const motorSpeed = limit(speed, 0, 255);
+        
+        if (direction == BLITZMove.Forward) {
+            runMotorSignedLeft(motorSpeed);
+            runMotorSignedRight(motorSpeed);
+        } else if (direction == BLITZMove.Backward) {
+            runMotorSignedLeft(-motorSpeed);
+            runMotorSignedRight(-motorSpeed);
+        } else if (direction == BLITZMove.TurnLeft) {
+            runMotorSignedLeft(-motorSpeed);
+            runMotorSignedRight(motorSpeed);
+        } else if (direction == BLITZMove.TurnRight) {
+            runMotorSignedLeft(motorSpeed);
+            runMotorSignedRight(-motorSpeed);
+        }
+    }
+
+    /**
+     * Stop and brake all BLITZ robot motors immediately.
+     */
+    //% block="BLITZ robot brake"
+    //% subcategory="BLITZ Robot"
+    //% group="Movement"
+    //% weight=90
+    export function blitzRobotBrake(): void {
+        robotStop();
+    }
+
+    /**
+     * Move the BLITZ robot sideways using mecanum wheels.
+     */
+    //% block="BLITZ robot mecanum sideways %direction at speed %speed"
+    //% speed.min=0 speed.max=255 speed.defl=150
+    //% subcategory="BLITZ Robot"
+    //% group="Mecanum"
+    //% weight=80
+    export function blitzRobotMecanum(direction: BLITZMecanum, speed: number = 150): void {
+        const motorSpeed = limit(speed, 0, 255);
+        
+        if (direction == BLITZMecanum.Right) {
+            // M1 Forward, M2 Backward, M3 Backward, M4 Forward
+            runMotorSingle(leftMotorChannel1, motorSpeed);
+            runMotorSingle(leftMotorChannel2, -motorSpeed);
+            runMotorSingle(rightMotorChannel1, -motorSpeed);
+            runMotorSingle(rightMotorChannel2, motorSpeed);
+        } else if (direction == BLITZMecanum.Left) {
+            // M1 Backward, M2 Forward, M3 Forward, M4 Backward
+            runMotorSingle(leftMotorChannel1, -motorSpeed);
+            runMotorSingle(leftMotorChannel2, motorSpeed);
+            runMotorSingle(rightMotorChannel1, motorSpeed);
+            runMotorSingle(rightMotorChannel2, -motorSpeed);
+        }
     }
 
     // ==========================================
@@ -702,6 +772,16 @@ namespace MAKEROBOT {
         } else {
             motionbit.runMotor(rightMotorChannel1, MotionBitMotorDirection.Backward, motorSpeed)
             motionbit.runMotor(rightMotorChannel2, MotionBitMotorDirection.Backward, motorSpeed)
+        }
+    }
+    
+    function runMotorSingle(channel: MotionBitMotorChannel, speed: number): void {
+        const motorSpeed = limit(Math.abs(speed), 0, 255)
+
+        if (speed >= 0) {
+            motionbit.runMotor(channel, MotionBitMotorDirection.Forward, motorSpeed)
+        } else {
+            motionbit.runMotor(channel, MotionBitMotorDirection.Backward, motorSpeed)
         }
     }
 
