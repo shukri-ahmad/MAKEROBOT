@@ -559,9 +559,9 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
-     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo or A+B to save and exit.
+     * Enter alignment calibration mode. Press A/B to adjust trim, and Logo to save and exit.
      */
-    //% block="BLITZ calibrate alignment (A/B to adjust, Logo or A+B to save)"
+    //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
     //% subcategory="BLITZ Robot"
     //% group="Setup"
     //% weight=105
@@ -579,34 +579,19 @@ namespace MAKEROBOT {
 
             if (input.logoIsPressed()) {
                 exitTriggered = true;
-            } else if (input.buttonIsPressed(Button.A) && input.buttonIsPressed(Button.B)) {
-                // Direct physical check for A+B
-                exitTriggered = true;
             } else if (input.buttonIsPressed(Button.A)) {
-                // Grace period for A+B overlap
-                basic.pause(50); 
-                if (input.buttonIsPressed(Button.B)) {
-                    exitTriggered = true;
-                } else {
-                    robotTrim = limit(robotTrim - 5, -50, 50);
-                    showTrimLed();
-                    // Wait until A is released to prevent runaway scrolling
-                    while(input.buttonIsPressed(Button.A) && !input.buttonIsPressed(Button.B)) {
-                        basic.pause(10);
-                    }
+                robotTrim = limit(robotTrim - 5, -50, 50);
+                showTrimLed();
+                // Wait until A is released to prevent runaway scrolling
+                while(input.buttonIsPressed(Button.A)) {
+                    basic.pause(10);
                 }
             } else if (input.buttonIsPressed(Button.B)) {
-                // Grace period for A+B overlap
-                basic.pause(50);
-                if (input.buttonIsPressed(Button.A)) {
-                    exitTriggered = true;
-                } else {
-                    robotTrim = limit(robotTrim + 5, -50, 50);
-                    showTrimLed();
-                    // Wait until B is released
-                    while(input.buttonIsPressed(Button.B) && !input.buttonIsPressed(Button.A)) {
-                        basic.pause(10);
-                    }
+                robotTrim = limit(robotTrim + 5, -50, 50);
+                showTrimLed();
+                // Wait until B is released
+                while(input.buttonIsPressed(Button.B)) {
+                    basic.pause(10);
                 }
             }
 
