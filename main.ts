@@ -147,7 +147,15 @@ enum BLITZMecanum {
     //% block="left"
     Left,
     //% block="right"
-    Right
+    Right,
+    //% block="forward-left"
+    ForwardLeft,
+    //% block="forward-right"
+    ForwardRight,
+    //% block="backward-left"
+    BackwardLeft,
+    //% block="backward-right"
+    BackwardRight
 }
 
 
@@ -572,9 +580,9 @@ namespace MAKEROBOT {
     }
 
     /**
-     * Move the BLITZ robot sideways using mecanum wheels.
+     * Move the BLITZ robot in mecanum directions (sideways and diagonal).
      */
-    //% block="BLITZ robot mecanum sideways %direction at speed %speed"
+    //% block="BLITZ robot mecanum %direction at speed %speed"
     //% speed.min=0 speed.max=255 speed.defl=150
     //% subcategory="BLITZ Robot"
     //% group="Mecanum"
@@ -593,6 +601,30 @@ namespace MAKEROBOT {
             runMotorSingle(leftMotorChannel1, -motorSpeed);
             runMotorSingle(leftMotorChannel2, motorSpeed);
             runMotorSingle(rightMotorChannel1, motorSpeed);
+            runMotorSingle(rightMotorChannel2, -motorSpeed);
+        } else if (direction == BLITZMecanum.ForwardRight) {
+            // M1 Forward, M2 Stop, M3 Stop, M4 Forward
+            runMotorSingle(leftMotorChannel1, motorSpeed);
+            runMotorSingle(leftMotorChannel2, 0);
+            runMotorSingle(rightMotorChannel1, 0);
+            runMotorSingle(rightMotorChannel2, motorSpeed);
+        } else if (direction == BLITZMecanum.ForwardLeft) {
+            // M1 Stop, M2 Forward, M3 Forward, M4 Stop
+            runMotorSingle(leftMotorChannel1, 0);
+            runMotorSingle(leftMotorChannel2, motorSpeed);
+            runMotorSingle(rightMotorChannel1, motorSpeed);
+            runMotorSingle(rightMotorChannel2, 0);
+        } else if (direction == BLITZMecanum.BackwardRight) {
+            // M1 Stop, M2 Backward, M3 Backward, M4 Stop
+            runMotorSingle(leftMotorChannel1, 0);
+            runMotorSingle(leftMotorChannel2, -motorSpeed);
+            runMotorSingle(rightMotorChannel1, -motorSpeed);
+            runMotorSingle(rightMotorChannel2, 0);
+        } else if (direction == BLITZMecanum.BackwardLeft) {
+            // M1 Backward, M2 Stop, M3 Stop, M4 Backward
+            runMotorSingle(leftMotorChannel1, -motorSpeed);
+            runMotorSingle(leftMotorChannel2, 0);
+            runMotorSingle(rightMotorChannel1, 0);
             runMotorSingle(rightMotorChannel2, -motorSpeed);
         }
     }
