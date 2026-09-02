@@ -91,7 +91,7 @@ enum MAKEROBOTTurnDirection {
 
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["Tracer Junior", "Tracer Senior", "Tracer Expert"]
+//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Remote", "BLITZ Robot"]
 //% groups=["Setup", "Movement", "Sensors"]
 namespace MAKEROBOT {
     let lastError = 0
@@ -132,14 +132,18 @@ namespace MAKEROBOT {
         }
     })
 
+    // ==========================================
+    // TRACER JUNIOR BLOCKS
+    // ==========================================
+
     /**
      * Calibrate the robot line sensor using default settings.
      * In JS: juniorRobotCalibration(speed)
      */
     //% block="robot calibration"
+    //% subcategory="TRACER Junior"
     //% group="Setup"
     //% weight=100
-    //% subcategory="Tracer Junior"
     export function juniorRobotCalibration(speed: number = 120): void {
         robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
@@ -149,17 +153,15 @@ namespace MAKEROBOT {
      * In JS: robotLineFollowUntil(until, speed, stopDelay)
      */
     //% block="robot line follow until %until"
+    //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=90
-    //% subcategory="Tracer Junior"
     export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
         let finalDelay = stopDelay;
         
-        // If delay is left at 0, calculate it automatically using an aggressive slope
         if (finalDelay == 0) {
-            // Speed 0 = 1200ms, Speed 150 = ~550ms, Speed 255 = 100ms
             finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
             finalDelay = Math.clamp(50, 2000, finalDelay);
         }
@@ -176,9 +178,9 @@ namespace MAKEROBOT {
      * In JS: robotTurn(move, speed)
      */
     //% block="robot turn %move"
+    //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=80
-    //% subcategory="Tracer Junior"
     export function robotTurn(move: MAKEROBOTMove, speed: number = 150): void {
         if (move == MAKEROBOTMove.Right) {
             turnToLineWithPin(MAKEROBOTTurnDirection.Right, speed, AnalogReadWritePin.P0)
@@ -187,15 +189,19 @@ namespace MAKEROBOT {
         }
     }
 
+    // ==========================================
+    // TRACER SENIOR BLOCKS
+    // ==========================================
+
     /**
      * Calibrate the robot line sensor.
      */
     //% block="robot calibration pin %pin speed %speed"
     //% pin.defl=MAKEROBOTCalibrationPin.P9
     //% speed.min=0 speed.max=255 speed.defl=120
+    //% subcategory="TRACER Senior"
     //% group="Setup"
-    //% weight=70
-    //% subcategory="Tracer Senior"
+    //% weight=100
     export function robotCalibration(pin: MAKEROBOTCalibrationPin, speed: number): void {
         const motorSpeed = limit(speed, 0, 255)
         const calibrationPin = calibrationPinValue(pin)
@@ -222,9 +228,9 @@ namespace MAKEROBOT {
     //% rightSpeed.min=-255 rightSpeed.max=255 rightSpeed.defl=0
     //% delay.min=0 delay.defl=0
     //% inlineInputMode=inline
+    //% subcategory="TRACER Senior"
     //% group="Movement"
-    //% weight=80
-    //% subcategory="Tracer Senior"
+    //% weight=90
     export function setMotorsSpeed(leftSpeed: number, rightSpeed: number, delay: number): void {
         runMotorSignedLeft(leftSpeed)
         runMotorSignedRight(rightSpeed)
@@ -245,9 +251,9 @@ namespace MAKEROBOT {
     //% d4.defl=MAKEROBOTMakerLinePin.P13
     //% d5.defl=MAKEROBOTMakerLinePin.P12
     //% inlineInputMode=inline
+    //% subcategory="TRACER Senior"
     //% group="Setup"
-    //% weight=90
-    //% subcategory="Tracer Senior"
+    //% weight=80
     export function setMakerLine(d1: MAKEROBOTMakerLinePin, d2: MAKEROBOTMakerLinePin, d3: MAKEROBOTMakerLinePin, d4: MAKEROBOTMakerLinePin, d5: MAKEROBOTMakerLinePin): void {
         makerLineD1 = makerLinePinValue(d1)
         makerLineD2 = makerLinePinValue(d2)
@@ -266,9 +272,9 @@ namespace MAKEROBOT {
     //% s4.defl=MAKEROBOTLineSignal.Off
     //% s5.defl=MAKEROBOTLineSignal.Off
     //% inlineInputMode=inline
+    //% subcategory="TRACER Senior"
     //% group="Sensors"
     //% weight=70
-    //% subcategory="Tracer Senior"
     export function lineDetectedOn(s1: MAKEROBOTLineSignal, s2: MAKEROBOTLineSignal, s3: MAKEROBOTLineSignal, s4: MAKEROBOTLineSignal, s5: MAKEROBOTLineSignal): boolean {
         return makerLineSignalMatches(makerLineD1, s1)
             && makerLineSignalMatches(makerLineD2, s2)
@@ -284,9 +290,9 @@ namespace MAKEROBOT {
     //% trig.defl=MAKEROBOTUltrasonicPin.P1
     //% echo.defl=MAKEROBOTUltrasonicPin.P2
     //% inlineInputMode=inline
+    //% subcategory="TRACER Senior"
     //% group="Setup"
-    //% weight=80
-    //% subcategory="Tracer Senior"
+    //% weight=60
     export function setUltrasonic(trig: MAKEROBOTUltrasonicPin, echo: MAKEROBOTUltrasonicPin): void {
         ultrasonicTrigPin = ultrasonicPinValue(trig)
         ultrasonicEchoPin = ultrasonicPinValue(echo)
@@ -296,14 +302,18 @@ namespace MAKEROBOT {
      * Return distance measured by ultrasonic sensor in centimeters.
      */
     //% block="ultrasonic distance (cm)"
+    //% subcategory="TRACER Senior"
     //% group="Sensors"
-    //% weight=60
-    //% subcategory="Tracer Senior"
+    //% weight=50
     export function readUltrasonic(): number {
         ultrasonicEnabled = true
         readUltrasonicNow()
         return ultrasonicDistance
     }
+
+    // ==========================================
+    // TRACER EXPERT BLOCKS (HIDDEN)
+    // ==========================================
 
     /**
      * Set the PID tuning values.
@@ -314,9 +324,9 @@ namespace MAKEROBOT {
     //% kd.defl=0.4
     //% ki.defl=0
     //% inlineInputMode=inline
+    //% subcategory="TRACER Expert"
     //% group="Setup"
     //% weight=100
-    //% subcategory="Tracer Expert"
     //% blockHidden=true
     export function setPidTuning(setpoint: number, kp: number, kd: number, ki: number): void {
         pidSetpoint = limit(setpoint, 0, 1023)
@@ -336,9 +346,9 @@ namespace MAKEROBOT {
     //% cross.defl=true
     //% stopTimer.min=0 stopTimer.defl=0
     //% inlineInputMode=inline
+    //% subcategory="TRACER Expert"
     //% group="Movement"
     //% weight=90
-    //% subcategory="Tracer Expert"
     //% blockHidden=true
     export function robotLineFollow(pin: MAKEROBOTLinePin, speed: number, cross: boolean, stopTimer: number): void {
         lineFollowWithPin(linePinValue(pin), speed, cross, stopTimer)
@@ -352,9 +362,9 @@ namespace MAKEROBOT {
     //% speed.min=0 speed.max=255 speed.defl=150
     //% pin.defl=MAKEROBOTLinePin.P0
     //% inlineInputMode=inline
+    //% subcategory="TRACER Expert"
     //% group="Movement"
     //% weight=80
-    //% subcategory="Tracer Expert"
     //% blockHidden=true
     export function robotTurnToLine(direction: MAKEROBOTTurnDirection, speed: number, pin: MAKEROBOTLinePin): void {
         turnToLineWithPin(direction, speed, linePinValue(pin))
@@ -364,9 +374,9 @@ namespace MAKEROBOT {
      * Stop the robot.
      */
     //% block="robot stop"
+    //% subcategory="TRACER Expert"
     //% group="Movement"
     //% weight=70
-    //% subcategory="Tracer Expert"
     //% blockHidden=true
     export function robotStop(): void {
         motionbit.brakeMotor(leftMotorChannel1)
@@ -374,6 +384,38 @@ namespace MAKEROBOT {
         motionbit.brakeMotor(rightMotorChannel1)
         motionbit.brakeMotor(rightMotorChannel2)
     }
+
+    // ==========================================
+    // BLITZ REMOTE BLOCKS
+    // ==========================================
+
+    /**
+     * Example BLITZ Remote Block
+     */
+    //% block="BLITZ connect remote"
+    //% subcategory="BLITZ Remote"
+    //% weight=100
+    export function blitzRemoteConnect(): void {
+        // Add your remote code here!
+    }
+
+    // ==========================================
+    // BLITZ ROBOT BLOCKS
+    // ==========================================
+
+    /**
+     * Example BLITZ Robot Block
+     */
+    //% block="BLITZ drive forward"
+    //% subcategory="BLITZ Robot"
+    //% weight=100
+    export function blitzDriveForward(): void {
+        // Add your robot code here!
+    }
+
+    // ==========================================
+    // INTERNAL FUNCTIONS (HIDDEN)
+    // ==========================================
 
     function lineFollowWithPin(pin: AnalogReadWritePin, speed: number, cross: boolean, stopTimer: number): void {
         const baseSpeed = limit(speed, 0, 255)
