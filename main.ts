@@ -569,7 +569,6 @@ namespace MAKEROBOT {
         let calibrating = true;
         showTrimLed();
         
-        // This loop pauses the code here until the user presses A+B to save and exit
         while (calibrating) {
             if (input.buttonIsPressed(Button.AB)) {
                 calibrating = false;
@@ -577,16 +576,18 @@ namespace MAKEROBOT {
                 basic.pause(1000);
                 basic.clearScreen();
                 
-                // Debounce so the A+B press doesn't trigger anything else immediately
+                // Debounce
                 while (input.buttonIsPressed(Button.AB)) {
                     basic.pause(10);
                 }
             } else if (input.buttonIsPressed(Button.A)) {
-                robotTrim = limit(robotTrim - 5, -20, 20);
+                // Boosted trim adjustment: steps of 10, max of 100
+                robotTrim = limit(robotTrim - 10, -100, 100);
                 showTrimLed();
                 basic.pause(200);
             } else if (input.buttonIsPressed(Button.B)) {
-                robotTrim = limit(robotTrim + 5, -20, 20);
+                // Boosted trim adjustment: steps of 10, max of 100
+                robotTrim = limit(robotTrim + 10, -100, 100);
                 showTrimLed();
                 basic.pause(200);
             }
@@ -608,10 +609,14 @@ namespace MAKEROBOT {
         let leftSpeed = baseSpeed;
         let rightSpeed = baseSpeed;
 
-        // Apply alignment trim to straight movements
         if (direction == BLITZMove.Forward || direction == BLITZMove.Backward) {
-            leftSpeed += (robotTrim < 0 ? robotTrim : 0);
-            rightSpeed -= (robotTrim > 0 ? robotTrim : 0);
+            if (robotTrim < 0) {
+                // robotTrim is negative, so adding it reduces leftSpeed
+                leftSpeed += robotTrim; 
+            } else if (robotTrim > 0) {
+                // robotTrim is positive, so subtracting it reduces rightSpeed
+                rightSpeed -= robotTrim; 
+            }
         }
         
         if (direction == BLITZMove.Backward) {
@@ -653,9 +658,11 @@ namespace MAKEROBOT {
             rightSpeed = innerSpeed;
         }
 
-        // Apply alignment trim
-        leftSpeed += (robotTrim < 0 ? robotTrim : 0);
-        rightSpeed -= (robotTrim > 0 ? robotTrim : 0);
+        if (robotTrim < 0) {
+            leftSpeed += robotTrim; 
+        } else if (robotTrim > 0) {
+            rightSpeed -= robotTrim; 
+        }
 
         if (direction == BLITZDirection.Backward) {
             leftSpeed = -leftSpeed;
@@ -726,21 +733,19 @@ namespace MAKEROBOT {
     // ==========================================
 
     function showTrimLed(): void {
-        // Map the -20 to 20 range onto the 5 horizontal LEDs
+        // Map the -100 to 100 range onto the 5 horizontal LEDs
         let x = 2;
-        if (robotTrim < -10) x = 0;
+        if (robotTrim <= -40) x = 0;
         else if (robotTrim < 0) x = 1;
-        else if (robotTrim > 10) x = 4;
+        else if (robotTrim >= 40) x = 4;
         else if (robotTrim > 0) x = 3;
 
         basic.clearScreen();
         
-        // Draw the horizontal axle line
         for (let i = 0; i < 5; i++) {
             led.plot(i, 2); 
         }
         
-        // Draw the steering column and center reference
         led.plot(x, 1);
         led.plot(x, 0); 
         led.plot(2, 3); 
