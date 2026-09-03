@@ -138,6 +138,17 @@ enum MAKEROBOTAxis {
     Roll
 }
 
+enum MAKEROBOTGyroDirection {
+    //% block="pitch forward"
+    PitchForward,
+    //% block="pitch backward"
+    PitchBackward,
+    //% block="roll left"
+    RollLeft,
+    //% block="roll right"
+    RollRight
+}
+
 // --- NEW BLITZ ROBOT ENUMS ---
 enum BLITZMove {
     //% block="forward"
@@ -592,6 +603,29 @@ namespace MAKEROBOT {
         
         return Math.clamp(minOut, maxOut, Math.trunc(mapped));
     }
+    
+    /**
+     * Check if the remote is tilted in a specific direction (with a 30-degree deadzone).
+     */
+    //% block="remote tilted %direction"
+    //% subcategory="BLITZ Remote"
+    //% weight=75
+    export function blitzRemoteTilted(direction: MAKEROBOTGyroDirection): boolean {
+        let pitch = input.rotation(Rotation.Pitch);
+        let roll = input.rotation(Rotation.Roll);
+
+        if (direction == MAKEROBOTGyroDirection.PitchForward) {
+            return pitch > 30;
+        } else if (direction == MAKEROBOTGyroDirection.PitchBackward) {
+            return pitch < -30;
+        } else if (direction == MAKEROBOTGyroDirection.RollLeft) {
+            return roll < -30;
+        } else if (direction == MAKEROBOTGyroDirection.RollRight) {
+            return roll > 30;
+        }
+        
+        return false;
+    }
 
 
     // ==========================================
@@ -601,7 +635,7 @@ namespace MAKEROBOT {
     /**
      * Enter alignment calibration mode. Press A/B to adjust trim, and Logo or A+B to save and exit.
      */
-    //% block="BLITZ calibrate alignment (A/B to adjust, Logo or A+B to save)"
+    //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
     //% subcategory="BLITZ Robot"
     //% group="Setup"
     //% weight=105
@@ -619,34 +653,19 @@ namespace MAKEROBOT {
 
             if (input.logoIsPressed()) {
                 exitTriggered = true;
-            } else if (input.buttonIsPressed(Button.A) && input.buttonIsPressed(Button.B)) {
-                // Direct physical check for A+B
-                exitTriggered = true;
             } else if (input.buttonIsPressed(Button.A)) {
-                // Grace period for A+B overlap
-                basic.pause(50); 
-                if (input.buttonIsPressed(Button.B)) {
-                    exitTriggered = true;
-                } else {
-                    robotTrim = limit(robotTrim - 5, -50, 50);
-                    showTrimLed();
-                    // Wait until A is released to prevent runaway scrolling
-                    while(input.buttonIsPressed(Button.A) && !input.buttonIsPressed(Button.B)) {
-                        basic.pause(10);
-                    }
+                robotTrim = limit(robotTrim - 5, -50, 50);
+                showTrimLed();
+                // Wait until A is released to prevent runaway scrolling
+                while(input.buttonIsPressed(Button.A)) {
+                    basic.pause(10);
                 }
             } else if (input.buttonIsPressed(Button.B)) {
-                // Grace period for A+B overlap
-                basic.pause(50);
-                if (input.buttonIsPressed(Button.A)) {
-                    exitTriggered = true;
-                } else {
-                    robotTrim = limit(robotTrim + 5, -50, 50);
-                    showTrimLed();
-                    // Wait until B is released
-                    while(input.buttonIsPressed(Button.B) && !input.buttonIsPressed(Button.A)) {
-                        basic.pause(10);
-                    }
+                robotTrim = limit(robotTrim + 5, -50, 50);
+                showTrimLed();
+                // Wait until B is released
+                while(input.buttonIsPressed(Button.B)) {
+                    basic.pause(10);
                 }
             }
 
