@@ -266,8 +266,9 @@ namespace MAKEROBOT {
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
-            finalDelay = Math.clamp(50, 2000, finalDelay);
+            // REDUCED: Delay map changed to 600 - 50ms to prevent 4-wheel overshoot
+            finalDelay = Math.trunc(pins.map(speed, 0, 255, 600, 50));
+            finalDelay = Math.clamp(20, 1000, finalDelay);
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
@@ -313,13 +314,16 @@ namespace MAKEROBOT {
         enterCalibration(calibrationPin)
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        basic.pause(1000)
+        // INCREASED PAUSE to 1500 for 4-wheel friction
+        basic.pause(1500)
         runMotorSignedLeft(motorSpeed)
         runMotorSignedRight(-motorSpeed)
-        basic.pause(2000)
+        // INCREASED PAUSE to 3000 for 4-wheel friction
+        basic.pause(3000)
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        basic.pause(1000)
+        // INCREASED PAUSE to 1500 for 4-wheel friction
+        basic.pause(1500)
         robotStop()
         exitCalibration(calibrationPin)
     }
