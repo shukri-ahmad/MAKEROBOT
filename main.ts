@@ -224,6 +224,9 @@ namespace MAKEROBOT {
     
     // Robot Alignment (Trim)
     let robotTrim = 0
+    
+    // Chassis type flag (Default is 4-Wheel mode = false)
+    let isTwoWheelMode = false;
 
     control.inBackground(function () {
         while (true) {
@@ -267,9 +270,15 @@ namespace MAKEROBOT {
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
-            // MAP UPDATED: Added a slight delay (maps down to 100ms at max speed instead of 0)
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
-            finalDelay = Math.clamp(50, 1000, finalDelay);
+            if (isTwoWheelMode) {
+                // Original 2-Wheel Delay Map
+                finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
+                finalDelay = Math.clamp(50, 2000, finalDelay);
+            } else {
+                // New 4-Wheel Delay Map
+                finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
+                finalDelay = Math.clamp(50, 1000, finalDelay);
+            }
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
@@ -301,6 +310,17 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
+     * Switch the robot tuning to 2-wheel mode. (Defaults to 4-wheel if this block is not used).
+     */
+    //% block="set 2-wheel chassis mode"
+    //% subcategory="TRACER Senior"
+    //% group="Setup"
+    //% weight=110
+    export function setTwoWheelMode(): void {
+        isTwoWheelMode = true;
+    }
+
+    /**
      * Calibrate the robot line sensor.
      */
     //% block="robot calibration pin %pin speed %speed"
@@ -313,19 +333,23 @@ namespace MAKEROBOT {
         const motorSpeed = limit(speed, 0, 255)
         const calibrationPin = calibrationPinValue(pin)
 
+        // Choose timings based on chassis type flag
+        const pauseShort = isTwoWheelMode ? 1000 : 2000;
+        const pauseLong = isTwoWheelMode ? 2000 : 4000;
+
         enterCalibration(calibrationPin)
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        // INCREASED PAUSE (+500ms) for wider 4-wheel sweep
-        basic.pause(2000)
+        basic.pause(pauseShort)
+        
         runMotorSignedLeft(motorSpeed)
         runMotorSignedRight(-motorSpeed)
-        // INCREASED PAUSE (+1000ms) to sweep all the way across
-        basic.pause(4000)
+        basic.pause(pauseLong)
+        
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        // INCREASED PAUSE (+500ms) to return to center
-        basic.pause(2000)
+        basic.pause(pauseShort)
+        
         robotStop()
         exitCalibration(calibrationPin)
     }
