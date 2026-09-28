@@ -248,7 +248,7 @@ namespace MAKEROBOT {
     //% subcategory="TRACER Junior"
     //% group="Setup"
     //% weight=100
-    export function juniorRobotCalibration(speed: number = 120): void {
+    export function juniorRobotCalibration(speed: number = 150): void {
         robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
 
