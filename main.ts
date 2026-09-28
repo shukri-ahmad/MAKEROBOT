@@ -260,7 +260,7 @@ namespace MAKEROBOT {
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=90
-    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150, stopDelay: number = 0): void {
+    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 180, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
         let finalDelay = stopDelay;
