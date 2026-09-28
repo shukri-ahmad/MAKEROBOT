@@ -226,7 +226,7 @@ namespace MAKEROBOT {
     let robotTrim = 0
     
     // Chassis type flag (Default is 4-Wheel mode = false)
-    let isTwoWheelMode = false;
+    let isIsobotMode = false;
 
     control.inBackground(function () {
         while (true) {
@@ -242,6 +242,17 @@ namespace MAKEROBOT {
     // ==========================================
     // TRACER JUNIOR BLOCKS
     // ==========================================
+
+    /**
+     * Switch the robot tuning to ISOBOT (2-wheel) mode. (Defaults to 4-wheel if this block is not used).
+     */
+    //% block="Set to ISOBOT mode"
+    //% subcategory="TRACER Junior"
+    //% group="Setup"
+    //% weight=110
+    export function setIsobotMode(): void {
+        isIsobotMode = true;
+    }
 
     /**
      * Calibrate the robot line sensor using default settings.
@@ -270,12 +281,12 @@ namespace MAKEROBOT {
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
-            if (isTwoWheelMode) {
-                // Original 2-Wheel Delay Map
+            if (isIsobotMode) {
+                // Original ISOBOT 2-Wheel Delay Map
                 finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
-                // New 4-Wheel Delay Map
+                // 4-Wheel Delay Map
                 finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
                 finalDelay = Math.clamp(50, 1000, finalDelay);
             }
@@ -310,17 +321,6 @@ namespace MAKEROBOT {
     // ==========================================
 
     /**
-     * Switch the robot tuning to 2-wheel mode. (Defaults to 4-wheel if this block is not used).
-     */
-    //% block="set 2-wheel chassis mode"
-    //% subcategory="TRACER Senior"
-    //% group="Setup"
-    //% weight=110
-    export function setTwoWheelMode(): void {
-        isTwoWheelMode = true;
-    }
-
-    /**
      * Calibrate the robot line sensor.
      */
     //% block="robot calibration pin %pin speed %speed"
@@ -334,8 +334,8 @@ namespace MAKEROBOT {
         const calibrationPin = calibrationPinValue(pin)
 
         // Choose timings based on chassis type flag
-        const pauseShort = isTwoWheelMode ? 1000 : 2000;
-        const pauseLong = isTwoWheelMode ? 2000 : 4000;
+        const pauseShort = isIsobotMode ? 1000 : 2000;
+        const pauseLong = isIsobotMode ? 2000 : 4000;
 
         enterCalibration(calibrationPin)
         runMotorSignedLeft(-motorSpeed)
