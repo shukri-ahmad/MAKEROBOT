@@ -257,6 +257,7 @@ namespace MAKEROBOT {
      * In JS: robotLineFollowUntil(until, speed, stopDelay)
      */
     //% block="robot line follow until %until"
+    //% speed.defl=180
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=90
@@ -266,9 +267,9 @@ namespace MAKEROBOT {
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
-            // REDUCED AGAIN: Delay map changed to 300 - 0ms to cut ~200ms more off stopping time
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 300, 0));
-            finalDelay = Math.clamp(0, 1000, finalDelay);
+            // MAP UPDATED: Added a slight delay (maps down to 100ms at max speed instead of 0)
+            finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
+            finalDelay = Math.clamp(50, 1000, finalDelay);
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
@@ -283,10 +284,11 @@ namespace MAKEROBOT {
      * In JS: robotTurn(move, speed)
      */
     //% block="robot turn %move"
+    //% speed.defl=180
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=80
-    export function robotTurn(move: MAKEROBOTMove, speed: number = 150): void {
+    export function robotTurn(move: MAKEROBOTMove, speed: number = 180): void {
         if (move == MAKEROBOTMove.Right) {
             turnToLineWithPin(MAKEROBOTTurnDirection.Right, speed, AnalogReadWritePin.P0)
         } else if (move == MAKEROBOTMove.Left) {
@@ -449,7 +451,7 @@ namespace MAKEROBOT {
      */
     //% block="robot line follow pin %pin speed %speed cross %cross timer to stop %stopTimer"
     //% pin.defl=MAKEROBOTLinePin.P0
-    //% speed.min=0 speed.max=255 speed.defl=150
+    //% speed.min=0 speed.max=255 speed.defl=180
     //% cross.shadow="toggleOnOff"
     //% cross.defl=true
     //% stopTimer.min=0 stopTimer.defl=0
@@ -458,7 +460,7 @@ namespace MAKEROBOT {
     //% group="Movement"
     //% weight=90
     //% blockHidden=true
-    export function robotLineFollow(pin: MAKEROBOTLinePin, speed: number, cross: boolean, stopTimer: number): void {
+    export function robotLineFollow(pin: MAKEROBOTLinePin, speed: number = 180, cross: boolean, stopTimer: number): void {
         lineFollowWithPin(linePinValue(pin), speed, cross, stopTimer)
     }
 
@@ -467,14 +469,14 @@ namespace MAKEROBOT {
      */
     //% block="robot turn to line %direction speed %speed pin %pin"
     //% direction.defl=MAKEROBOTTurnDirection.Left
-    //% speed.min=0 speed.max=255 speed.defl=150
+    //% speed.min=0 speed.max=255 speed.defl=180
     //% pin.defl=MAKEROBOTLinePin.P0
     //% inlineInputMode=inline
     //% subcategory="TRACER Expert"
     //% group="Movement"
     //% weight=80
     //% blockHidden=true
-    export function robotTurnToLine(direction: MAKEROBOTTurnDirection, speed: number, pin: MAKEROBOTLinePin): void {
+    export function robotTurnToLine(direction: MAKEROBOTTurnDirection, speed: number = 180, pin: MAKEROBOTLinePin): void {
         turnToLineWithPin(direction, speed, linePinValue(pin))
     }
 
