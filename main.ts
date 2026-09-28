@@ -248,7 +248,7 @@ namespace MAKEROBOT {
     //% subcategory="TRACER Junior"
     //% group="Setup"
     //% weight=100
-    export function juniorRobotCalibration(speed: number = 150): void {
+    export function juniorRobotCalibration(speed: number = 120): void {
         robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
 
@@ -260,15 +260,15 @@ namespace MAKEROBOT {
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=90
-    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 180, stopDelay: number = 0): void {
+    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 150, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
-            // REDUCED: Delay map changed to 600 - 50ms to prevent 4-wheel overshoot
-            finalDelay = Math.trunc(pins.map(speed, 0, 255, 600, 50));
-            finalDelay = Math.clamp(20, 1000, finalDelay);
+            // REDUCED AGAIN: Delay map changed to 300 - 0ms to cut ~200ms more off stopping time
+            finalDelay = Math.trunc(pins.map(speed, 0, 255, 300, 0));
+            finalDelay = Math.clamp(0, 1000, finalDelay);
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
@@ -314,16 +314,16 @@ namespace MAKEROBOT {
         enterCalibration(calibrationPin)
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        // INCREASED PAUSE to 1500 for 4-wheel friction
-        basic.pause(1500)
+        // INCREASED PAUSE (+500ms) for wider 4-wheel sweep
+        basic.pause(2000)
         runMotorSignedLeft(motorSpeed)
         runMotorSignedRight(-motorSpeed)
-        // INCREASED PAUSE to 3000 for 4-wheel friction
-        basic.pause(3000)
+        // INCREASED PAUSE (+1000ms) to sweep all the way across
+        basic.pause(4000)
         runMotorSignedLeft(-motorSpeed)
         runMotorSignedRight(motorSpeed)
-        // INCREASED PAUSE to 1500 for 4-wheel friction
-        basic.pause(1500)
+        // INCREASED PAUSE (+500ms) to return to center
+        basic.pause(2000)
         robotStop()
         exitCalibration(calibrationPin)
     }
