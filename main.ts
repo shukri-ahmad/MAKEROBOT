@@ -61,6 +61,16 @@ enum MAKEROBOTLineSignal {
     Any
 }
 
+// --- NEW JUNCTION ENUM ---
+enum MAKEROBOTJunction {
+    //% block="cross / t-junction"
+    Cross,
+    //% block="left branch"
+    Left,
+    //% block="right branch"
+    Right
+}
+
 enum MAKEROBOTUltrasonicPin {
     //% block="P0"
     P0,
@@ -232,7 +242,7 @@ namespace MAKEROBOT {
         while (true) {
             if (ultrasonicEnabled) {
                 readUltrasonicNow()
-                basic.pause(200)
+                basic.pause(50) // <--- FASTER REFLEXES for if/else logic
             } else {
                 basic.pause(50)
             }
@@ -397,6 +407,57 @@ namespace MAKEROBOT {
     }
 
     /**
+     * Set ultrasonic sensor trigger and echo pins.
+     */
+    //% block="set ultrasonic Trig %trig Echo %echo"
+    //% trig.defl=MAKEROBOTUltrasonicPin.P1
+    //% echo.defl=MAKEROBOTUltrasonicPin.P2
+    //% inlineInputMode=inline
+    //% subcategory="TRACER Senior"
+    //% group="Setup"
+    //% weight=78
+    export function setUltrasonic(trig: MAKEROBOTUltrasonicPin, echo: MAKEROBOTUltrasonicPin): void {
+        ultrasonicTrigPin = ultrasonicPinValue(trig)
+        ultrasonicEchoPin = ultrasonicPinValue(echo)
+    }
+
+    /**
+     * Read the raw analog line position (0 to 1023). ~500 is perfectly centered.
+     */
+    //% block="line position on pin %pin"
+    //% pin.defl=MAKEROBOTLinePin.P0
+    //% subcategory="TRACER Senior"
+    //% group="Sensors"
+    //% weight=76
+    export function readLinePosition(pin: MAKEROBOTLinePin): number {
+        return pins.analogReadPin(linePinValue(pin));
+    }
+
+    /**
+     * Check if a specific type of intersection is currently detected by the Maker Line.
+     */
+    //% block="junction %junction detected"
+    //% subcategory="TRACER Senior"
+    //% group="Sensors"
+    //% weight=75
+    export function junctionDetected(junction: MAKEROBOTJunction): boolean {
+        let leftExtreme = makerLineDetected(makerLineD1);
+        let rightExtreme = makerLineDetected(makerLineD5);
+
+        if (junction == MAKEROBOTJunction.Cross) {
+            // Both outer sensors see black
+            return leftExtreme && rightExtreme;
+        } else if (junction == MAKEROBOTJunction.Left) {
+            // Only left outer sensor sees black
+            return leftExtreme && !rightExtreme;
+        } else if (junction == MAKEROBOTJunction.Right) {
+            // Only right outer sensor sees black
+            return !leftExtreme && rightExtreme;
+        }
+        return false;
+    }
+
+    /**
      * Check whether Maker Line sensor signals match the selected pattern.
      */
     //% block="line detected on S1 %s1 S2 %s2 S3 %s3 S4 %s4 S5 %s5"
@@ -418,18 +479,16 @@ namespace MAKEROBOT {
     }
 
     /**
-     * Set ultrasonic sensor trigger and echo pins.
+     * Check if an obstacle is detected within a specific distance.
      */
-    //% block="set ultrasonic Trig %trig Echo %echo"
-    //% trig.defl=MAKEROBOTUltrasonicPin.P1
-    //% echo.defl=MAKEROBOTUltrasonicPin.P2
-    //% inlineInputMode=inline
+    //% block="obstacle detected < %distance cm"
+    //% distance.defl=15
     //% subcategory="TRACER Senior"
-    //% group="Setup"
-    //% weight=60
-    export function setUltrasonic(trig: MAKEROBOTUltrasonicPin, echo: MAKEROBOTUltrasonicPin): void {
-        ultrasonicTrigPin = ultrasonicPinValue(trig)
-        ultrasonicEchoPin = ultrasonicPinValue(echo)
+    //% group="Sensors"
+    //% weight=55
+    export function obstacleDetected(distance: number): boolean {
+        ultrasonicEnabled = true;
+        return ultrasonicDistance < distance;
     }
 
     /**
