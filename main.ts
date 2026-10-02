@@ -242,7 +242,7 @@ namespace MAKEROBOT {
         while (true) {
             if (ultrasonicEnabled) {
                 readUltrasonicNow()
-                basic.pause(50) // <--- FASTER REFLEXES for if/else logic
+                basic.pause(50) // FASTER REFLEXES for if/else logic
             } else {
                 basic.pause(50)
             }
@@ -307,6 +307,18 @@ namespace MAKEROBOT {
         } else {
             lineFollowWithPin(AnalogReadWritePin.P0, speed, true, finalDelay)
         }
+    }
+
+    /**
+     * Check if an obstacle is detected within 15 cm.
+     */
+    //% block="obstacle detected < 15 cm"
+    //% subcategory="TRACER Junior"
+    //% group="Sensors"
+    //% weight=85
+    export function juniorObstacleDetected(): boolean {
+        ultrasonicEnabled = true;
+        return ultrasonicDistance < 15;
     }
 
     /**
