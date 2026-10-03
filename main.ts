@@ -3,7 +3,6 @@
  */
 enum MAKEROBOTMove {
     //% block="left"
-    Left,
     //% block="right"
     Right
 }
