@@ -293,12 +293,12 @@ namespace MAKEROBOT {
         if (finalDelay == 0) {
             if (isIsobotMode) {
                 // Original ISOBOT 2-Wheel Delay Map
-                finalDelay = Math.round(pins.map(speed, 0, 255, 1200, 100));
-                finalDelay = limit(finalDelay, 50, 2000);
+                finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
+                finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
                 // 4-Wheel Delay Map
-                finalDelay = Math.round(pins.map(speed, 0, 255, 400, 100));
-                finalDelay = limit(finalDelay, 50, 1000);
+                finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
+                finalDelay = Math.clamp(50, 1000, finalDelay);
             }
         }
 
@@ -491,19 +491,6 @@ namespace MAKEROBOT {
     }
 
     /**
-     * Check if an obstacle is detected within a specific distance.
-     */
-    //% block="obstacle detected < %distance cm"
-    //% distance.defl=15
-    //% subcategory="TRACER Senior"
-    //% group="Sensors"
-    //% weight=55
-    export function obstacleDetected(distance: number): boolean {
-        ultrasonicEnabled = true;
-        return ultrasonicDistance < distance;
-    }
-
-    /**
      * Return distance measured by ultrasonic sensor in centimeters.
      */
     //% block="ultrasonic distance (cm)"
@@ -693,7 +680,7 @@ namespace MAKEROBOT {
         // Ensure angle is clamped between the user's start and end angles
         let minAngle = Math.min(startAngle, endAngle);
         let maxAngle = Math.max(startAngle, endAngle);
-        let constrainedAngle = limit(angle, minAngle, maxAngle);
+        let constrainedAngle = Math.clamp(minAngle, maxAngle, angle);
         
         // Map the angle to the output range
         let mapped = pins.map(constrainedAngle, startAngle, endAngle, outStart, outEnd);
@@ -702,7 +689,7 @@ namespace MAKEROBOT {
         let minOut = Math.min(outStart, outEnd);
         let maxOut = Math.max(outStart, outEnd);
         
-        return limit(Math.round(mapped), minOut, maxOut);
+        return Math.clamp(minOut, maxOut, Math.trunc(mapped));
     }
     
     /**
@@ -834,7 +821,7 @@ namespace MAKEROBOT {
     //% weight=95
     export function blitzRobotCorner(direction: BLITZDirection, corner: BLITZCorner, radius: number, speed: number): void {
         const baseSpeed = limit(speed, 0, 255);
-        const innerSpeed = Math.round(baseSpeed * (limit(radius, 0, 100) / 100));
+        const innerSpeed = Math.trunc(baseSpeed * (limit(radius, 0, 100) / 100));
         
         let leftSpeed = 0;
         let rightSpeed = 0;
