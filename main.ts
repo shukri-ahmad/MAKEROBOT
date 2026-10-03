@@ -491,6 +491,19 @@ namespace MAKEROBOT {
     }
 
     /**
+     * Check if an obstacle is detected within a specific distance.
+     */
+    //% block="obstacle detected < %distance cm"
+    //% distance.defl=15
+    //% subcategory="TRACER Senior"
+    //% group="Sensors"
+    //% weight=55
+    export function obstacleDetected(distance: number): boolean {
+        ultrasonicEnabled = true;
+        return ultrasonicDistance < distance;
+    }
+
+    /**
      * Return distance measured by ultrasonic sensor in centimeters.
      */
     //% block="ultrasonic distance (cm)"
