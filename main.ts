@@ -201,7 +201,7 @@ enum BLITZMecanum {
 }
 
 
-//% color=#3455db icon="\uf11b"
+//% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
 //% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Remote", "BLITZ Robot"]
 //% groups=["Setup", "Movement", "Sensors", "Mecanum"]
