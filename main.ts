@@ -203,7 +203,7 @@ enum BLITZMecanum {
 
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Remote", "BLITZ Robot"]
+//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "TRACER Remote", "BLITZ Remote", "BLITZ Robot"]
 //% groups=["Setup", "Movement", "Sensors", "Mecanum"]
 namespace MAKEROBOT {
     let lastError = 0
@@ -229,7 +229,7 @@ namespace MAKEROBOT {
     let ultrasonicTrigPin = DigitalPin.P1
     let ultrasonicEchoPin = DigitalPin.P2
     let ultrasonicDistance = 255
-    let ultrasonicEnabled = true // CHANGED FOR KIDS: Sensor is now always awake!
+    let ultrasonicEnabled = true // FOR KIDS: Sensor is now always awake!
     let ultrasonicDivisor = control.hardwareVersion() == "1" ? 39 : 58
     
     // Robot Alignment (Trim)
@@ -237,6 +237,10 @@ namespace MAKEROBOT {
     
     // Chassis type flag (Default is 4-Wheel mode = false)
     let isIsobotMode = false;
+
+    // TRACER Remote Variables
+    let tracerRemoteLastDir = ""
+    let tracerRemoteRunning = false
 
     control.inBackground(function () {
         while (true) {
@@ -246,6 +250,32 @@ namespace MAKEROBOT {
             } else {
                 basic.pause(50)
             }
+        }
+    })
+
+    // TRACER Remote Background Task
+    control.inBackground(function () {
+        while (true) {
+            if (tracerRemoteRunning) {
+                let currentDir = "STOP"
+
+                if (blitzRemoteRocker(MAKEROBOTRocker.Up)) {
+                    currentDir = "UP"
+                } else if (blitzRemoteRocker(MAKEROBOTRocker.Down)) {
+                    currentDir = "DOWN"
+                } else if (blitzRemoteRocker(MAKEROBOTRocker.Left)) {
+                    currentDir = "LEFT"
+                } else if (blitzRemoteRocker(MAKEROBOTRocker.Right)) {
+                    currentDir = "RIGHT"
+                }
+
+                // State-Change Logic: Only send when direction changes!
+                if (currentDir != tracerRemoteLastDir) {
+                    radio.sendString(currentDir)
+                    tracerRemoteLastDir = currentDir
+                }
+            }
+            basic.pause(30)
         }
     })
 
@@ -307,9 +337,6 @@ namespace MAKEROBOT {
         } else {
             lineFollowWithPin(AnalogReadWritePin.P0, speed, true, finalDelay)
         }
-
-        // ADDED FOR KIDS: Hidden delay to let physical momentum settle and sensor ping catch up!
-        // basic.pause(200)
     }
 
     /**
@@ -591,6 +618,36 @@ namespace MAKEROBOT {
         motionbit.brakeMotor(leftMotorChannel2)
         motionbit.brakeMotor(rightMotorChannel1)
         motionbit.brakeMotor(rightMotorChannel2)
+    }
+
+    // ==========================================
+    // TRACER REMOTE BLOCKS
+    // ==========================================
+
+    /**
+     * Start the TRACER grid remote transmitter on a specific radio group.
+     */
+    //% block="start TRACER remote on radio group %group"
+    //% group.defl=1
+    //% subcategory="TRACER Remote"
+    //% weight=100
+    export function startTracerRemote(group: number): void {
+        radio.setGroup(group)
+        tracerRemoteRunning = true
+    }
+
+    /**
+     * Get the current active direction of the TRACER remote rocker ("UP", "DOWN", "LEFT", "RIGHT", "STOP").
+     */
+    //% block="TRACER remote active direction"
+    //% subcategory="TRACER Remote"
+    //% weight=90
+    export function tracerRemoteDirection(): string {
+        if (blitzRemoteRocker(MAKEROBOTRocker.Up)) return "UP"
+        if (blitzRemoteRocker(MAKEROBOTRocker.Down)) return "DOWN"
+        if (blitzRemoteRocker(MAKEROBOTRocker.Left)) return "LEFT"
+        if (blitzRemoteRocker(MAKEROBOTRocker.Right)) return "RIGHT"
+        return "STOP"
     }
 
     // ==========================================
