@@ -113,6 +113,31 @@ enum MAKEROBOTTracerCommand {
     Stop = 0
 }
 
+enum MAKEROBOTBlitzCommand {
+    //% block="UP"
+    Up = 1,
+    //% block="DOWN"
+    Down = 2,
+    //% block="LEFT"
+    Left = 3,
+    //% block="RIGHT"
+    Right = 4,
+    //% block="UP-LEFT"
+    UpLeft = 5,
+    //% block="UP-RIGHT"
+    UpRight = 6,
+    //% block="DOWN-LEFT"
+    DownLeft = 7,
+    //% block="DOWN-RIGHT"
+    DownRight = 8,
+    //% block="SLIDE LEFT"
+    SlideLeft = 9,
+    //% block="SLIDE RIGHT"
+    SlideRight = 10,
+    //% block="STOP"
+    Stop = 0
+}
+
 enum MAKEROBOTRemoteButton {
     //% block="B1"
     B1,
@@ -217,7 +242,7 @@ enum BLITZMecanum {
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
 //% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "MAKEROBOT Remote", "BLITZ Robot"]
-//% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto"]
+//% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto", "BLITZ Remote"]
 namespace MAKEROBOT {
     let lastError = 0
     let integral = 0
@@ -750,6 +775,17 @@ namespace MAKEROBOT {
     //% group="TRACER Semi Auto"
     //% weight=10
     export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
+        return command;
+    }
+
+    /**
+     * Use this block to check which command the BLITZ robot received! (Or snap into a radio block to send it)
+     */
+    //% block="BLITZ command %command"
+    //% subcategory="MAKEROBOT Remote"
+    //% group="BLITZ Remote"
+    //% weight=9
+    export function readBlitzCommand(command: MAKEROBOTBlitzCommand): number {
         return command;
     }
 
