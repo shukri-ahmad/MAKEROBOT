@@ -248,6 +248,7 @@ namespace MAKEROBOT {
     radio.onReceivedValue(function (name: string, value: number) {
         if (name == "TRACER_ACK" && value == 1) {
             remoteIsBusy = false
+            lastSentCommand = "" // WIPE MEMORY: Allows kids to hold the joystick for continuous fluid movement!
             busyTimer = 0
         }
     })
@@ -265,6 +266,7 @@ namespace MAKEROBOT {
                 busyTimer++
                 if (busyTimer >= 30) { // ~3 seconds
                     remoteIsBusy = false
+                    lastSentCommand = "" // WIPE MEMORY ON TIMEOUT TOO
                     busyTimer = 0
                 }
             } else {
@@ -598,6 +600,7 @@ namespace MAKEROBOT {
         }
     }
 
+    let lastAckTime = 0;
     /**
      * Tell the remote that the robot has arrived and is ready for the next command.
      */
@@ -605,7 +608,12 @@ namespace MAKEROBOT {
     //% subcategory="MAKEROBOT Remote"
     //% weight=104
     export function sendTracerReady(): void {
-        radio.sendValue("TRACER_ACK", 1)
+        let now = input.runningTime()
+        // SILENT THROTTLE: Prevents the robot from flooding the radio channel even if placed in a tight forever loop!
+        if (now - lastAckTime > 250) { 
+            radio.sendValue("TRACER_ACK", 1)
+            lastAckTime = now
+        }
     }
 
     /**
