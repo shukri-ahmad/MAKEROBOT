@@ -100,6 +100,13 @@ enum MAKEROBOTTurnDirection {
 }
 
 // --- NEW REMOTE ENUMS ---
+enum MAKEROBOTRemoteMode {
+    //% block="TRACER"
+    Tracer,
+    //% block="BLITZ"
+    Blitz
+}
+
 enum MAKEROBOTRemoteButton {
     //% block="B1"
     B1,
@@ -203,7 +210,7 @@ enum BLITZMecanum {
 
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "TRACER Remote", "BLITZ Remote", "BLITZ Robot"]
+//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "MAKEROBOT Remote", "BLITZ Robot"]
 //% groups=["Setup", "Movement", "Sensors", "Mecanum"]
 namespace MAKEROBOT {
     let lastError = 0
@@ -238,10 +245,12 @@ namespace MAKEROBOT {
     // Chassis type flag (Default is 4-Wheel mode = false)
     let isIsobotMode = false;
 
-    // TRACER Remote Variables
-    let tracerRemoteLastDir = ""
-    let tracerRemoteRunning = false
+    // MAKEROBOT Remote Variables
+    let currentRemoteMode = MAKEROBOTRemoteMode.Blitz
+    let remoteRunning = false
+    let remoteLastDir = ""
 
+    // Ultrasonic Background Task
     control.inBackground(function () {
         while (true) {
             if (ultrasonicEnabled) {
@@ -253,26 +262,27 @@ namespace MAKEROBOT {
         }
     })
 
-    // TRACER Remote Background Task
+    // Remote Background Task (Anti-Spam Logic)
     control.inBackground(function () {
         while (true) {
-            if (tracerRemoteRunning) {
+            // Only run the auto-transmitter if the remote is actively in TRACER mode
+            if (remoteRunning && currentRemoteMode == MAKEROBOTRemoteMode.Tracer) {
                 let currentDir = "STOP"
 
-                if (blitzRemoteRocker(MAKEROBOTRocker.Up)) {
+                if (remoteRocker(MAKEROBOTRocker.Up)) {
                     currentDir = "UP"
-                } else if (blitzRemoteRocker(MAKEROBOTRocker.Down)) {
+                } else if (remoteRocker(MAKEROBOTRocker.Down)) {
                     currentDir = "DOWN"
-                } else if (blitzRemoteRocker(MAKEROBOTRocker.Left)) {
+                } else if (remoteRocker(MAKEROBOTRocker.Left)) {
                     currentDir = "LEFT"
-                } else if (blitzRemoteRocker(MAKEROBOTRocker.Right)) {
+                } else if (remoteRocker(MAKEROBOTRocker.Right)) {
                     currentDir = "RIGHT"
                 }
 
                 // State-Change Logic: Only send when direction changes!
-                if (currentDir != tracerRemoteLastDir) {
+                if (currentDir != remoteLastDir) {
                     radio.sendString(currentDir)
-                    tracerRemoteLastDir = currentDir
+                    remoteLastDir = currentDir
                 }
             }
             basic.pause(30)
@@ -621,46 +631,30 @@ namespace MAKEROBOT {
     }
 
     // ==========================================
-    // TRACER REMOTE BLOCKS
+    // MAKEROBOT REMOTE BLOCKS
     // ==========================================
 
     /**
-     * Start the TRACER grid remote transmitter on a specific radio group.
+     * Start the MAKEROBOT remote on a specific radio group. 
+     * TRACER mode auto-sends grid commands (Anti-Spam). BLITZ mode acts as standard RC.
      */
-    //% block="start TRACER remote on radio group %group"
+    //% block="start remote as %mode on radio group %group"
     //% group.defl=1
-    //% subcategory="TRACER Remote"
-    //% weight=100
-    export function startTracerRemote(group: number): void {
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=105
+    export function startRemote(mode: MAKEROBOTRemoteMode, group: number): void {
         radio.setGroup(group)
-        tracerRemoteRunning = true
+        currentRemoteMode = mode
+        remoteRunning = true
     }
-
-    /**
-     * Get the current active direction of the TRACER remote rocker ("UP", "DOWN", "LEFT", "RIGHT", "STOP").
-     */
-    //% block="TRACER remote active direction"
-    //% subcategory="TRACER Remote"
-    //% weight=90
-    export function tracerRemoteDirection(): string {
-        if (blitzRemoteRocker(MAKEROBOTRocker.Up)) return "UP"
-        if (blitzRemoteRocker(MAKEROBOTRocker.Down)) return "DOWN"
-        if (blitzRemoteRocker(MAKEROBOTRocker.Left)) return "LEFT"
-        if (blitzRemoteRocker(MAKEROBOTRocker.Right)) return "RIGHT"
-        return "STOP"
-    }
-
-    // ==========================================
-    // BLITZ REMOTE BLOCKS
-    // ==========================================
 
     /**
      * Check the state of the gamepad rocker (joystick).
      */
     //% block="remote rocker %value"
-    //% subcategory="BLITZ Remote"
+    //% subcategory="MAKEROBOT Remote"
     //% weight=100
-    export function blitzRemoteRocker(value: MAKEROBOTRocker): boolean {
+    export function remoteRocker(value: MAKEROBOTRocker): boolean {
         pins.setPull(DigitalPin.P8, PinPullMode.PullUp);
         let x = pins.analogReadPin(AnalogPin.P1);
         let y = pins.analogReadPin(AnalogPin.P2);
@@ -703,9 +697,9 @@ namespace MAKEROBOT {
      * Check the state of the gamepad buttons.
      */
     //% block="remote button %num is %value"
-    //% subcategory="BLITZ Remote"
+    //% subcategory="MAKEROBOT Remote"
     //% weight=90
-    export function blitzRemoteButton(num: MAKEROBOTRemoteButton, value: MAKEROBOTButtonState): boolean {
+    export function remoteButton(num: MAKEROBOTRemoteButton, value: MAKEROBOTButtonState): boolean {
         let temp = false;
         switch (num) {
             case MAKEROBOTRemoteButton.B1: {
@@ -739,9 +733,9 @@ namespace MAKEROBOT {
     //% startAngle.defl=-90 endAngle.defl=90
     //% outStart.defl=-255 outEnd.defl=255
     //% inlineInputMode=inline
-    //% subcategory="BLITZ Remote"
+    //% subcategory="MAKEROBOT Remote"
     //% weight=80
-    export function blitzRemoteMotion(axis: MAKEROBOTAxis, startAngle: number, endAngle: number, outStart: number, outEnd: number): number {
+    export function remoteMotion(axis: MAKEROBOTAxis, startAngle: number, endAngle: number, outStart: number, outEnd: number): number {
         let angle = 0;
         
         if (axis == MAKEROBOTAxis.Pitch) {
@@ -769,9 +763,9 @@ namespace MAKEROBOT {
      * Check if the remote is tilted in a specific direction (with a 30-degree deadzone).
      */
     //% block="remote tilted %direction"
-    //% subcategory="BLITZ Remote"
+    //% subcategory="MAKEROBOT Remote"
     //% weight=75
-    export function blitzRemoteTilted(direction: MAKEROBOTGyroDirection): boolean {
+    export function remoteTilted(direction: MAKEROBOTGyroDirection): boolean {
         let pitch = input.rotation(Rotation.Pitch);
         let roll = input.rotation(Rotation.Roll);
 
