@@ -5,8 +5,8 @@
     "dependencies": {
         "core": "*",
         "microphone": "*",
-        "motionbit": "github:CytronTechnologies/pxt-motionbit"
-        "radio": "---"
+        "motionbit": "github:CytronTechnologies/pxt-motionbit",
+        "radio": "*"
     },
     "files": [
         "main.blocks",
