@@ -1143,13 +1143,23 @@ namespace MAKEROBOT {
         control.waitMicros(10)
         pins.digitalWritePin(ultrasonicTrigPin, 0)
 
-        const pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
+        let pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
+        let dist = pulse == 0 ? 255 : Math.idiv(pulse, ultrasonicDivisor)
 
-        if (pulse == 0) {
-            ultrasonicDistance = 255
-        } else {
-            ultrasonicDistance = Math.idiv(pulse, ultrasonicDivisor)
+        // Ghost Echo Filter: If it was blocked, but now says clear, double check!
+        if (dist > 20 && ultrasonicDistance <= 20) {
+            basic.pause(10) // wait for echoes to die down
+            pins.digitalWritePin(ultrasonicTrigPin, 0)
+            control.waitMicros(2)
+            pins.digitalWritePin(ultrasonicTrigPin, 1)
+            control.waitMicros(10)
+            pins.digitalWritePin(ultrasonicTrigPin, 0)
+            
+            pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
+            dist = pulse == 0 ? 255 : Math.idiv(pulse, ultrasonicDivisor)
         }
+
+        ultrasonicDistance = dist
     }
 
     function linePinValue(pin: MAKEROBOTLinePin): AnalogReadWritePin {
