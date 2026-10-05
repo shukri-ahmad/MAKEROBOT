@@ -229,7 +229,7 @@ namespace MAKEROBOT {
     let ultrasonicTrigPin = DigitalPin.P1
     let ultrasonicEchoPin = DigitalPin.P2
     let ultrasonicDistance = 255
-    let ultrasonicEnabled = false
+    let ultrasonicEnabled = true // CHANGED FOR KIDS: Sensor is now always awake!
     let ultrasonicDivisor = control.hardwareVersion() == "1" ? 39 : 58
     
     // Robot Alignment (Trim)
@@ -307,6 +307,9 @@ namespace MAKEROBOT {
         } else {
             lineFollowWithPin(AnalogReadWritePin.P0, speed, true, finalDelay)
         }
+
+        // ADDED FOR KIDS: Hidden delay to let physical momentum settle and sensor ping catch up!
+        basic.pause(200)
     }
 
     /**
