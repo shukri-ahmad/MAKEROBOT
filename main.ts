@@ -217,7 +217,7 @@ enum BLITZMecanum {
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
 //% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "MAKEROBOT Remote", "BLITZ Robot"]
-//% groups=["Setup", "Movement", "Sensors", "Mecanum"]
+//% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto"]
 namespace MAKEROBOT {
     let lastError = 0
     let integral = 0
@@ -350,6 +350,17 @@ namespace MAKEROBOT {
         } else if (move == MAKEROBOTMove.Left) {
             turnToLineWithPin(MAKEROBOTTurnDirection.Left, speed, AnalogReadWritePin.P0)
         }
+    }
+
+    /**
+     * Use this block to check which command the robot received!
+     */
+    //% block="TRACER command %command"
+    //% subcategory="TRACER Junior"
+    //% group="Semi Auto"
+    //% weight=70
+    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
+        return command;
     }
 
     // ==========================================
@@ -612,33 +623,6 @@ namespace MAKEROBOT {
     let lastSendTime = 0
 
     /**
-     * Send a TRACER radio command without spamming. (Uses fast numbers behind the scenes!)
-     */
-    //% block="send TRACER command %command"
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=105
-    export function sendTracerCommand(command: MAKEROBOTTracerCommand): void {
-        let currentTime = input.runningTime()
-        
-        // Send if the command CHANGED, OR if 100ms has passed (Heartbeat)
-        if (command != lastSentCommand || currentTime - lastSendTime > 100) {
-            radio.sendNumber(command)
-            lastSentCommand = command
-            lastSendTime = currentTime
-        }
-    }
-
-    /**
-     * Use this block to check which command the robot received!
-     */
-    //% block="TRACER command %command"
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=104
-    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
-        return command;
-    }
-
-    /**
      * Check the state of the gamepad rocker (joystick).
      */
     //% block="remote rocker %value"
@@ -770,6 +754,24 @@ namespace MAKEROBOT {
         }
         
         return false;
+    }
+
+    /**
+     * Send a TRACER radio command without spamming. (Uses fast numbers behind the scenes!)
+     */
+    //% block="send TRACER command %command"
+    //% subcategory="MAKEROBOT Remote"
+    //% group="TRACER Semi Auto"
+    //% weight=10
+    export function sendTracerCommand(command: MAKEROBOTTracerCommand): void {
+        let currentTime = input.runningTime()
+        
+        // Send if the command CHANGED, OR if 100ms has passed (Heartbeat)
+        if (command != lastSentCommand || currentTime - lastSendTime > 100) {
+            radio.sendNumber(command)
+            lastSentCommand = command
+            lastSendTime = currentTime
+        }
     }
 
 
