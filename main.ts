@@ -1,5 +1,5 @@
 /**
- * MAKEROBOT V2
+ * MAKEROBOT
  */
 enum MAKEROBOTMove {
     //% block="left"
@@ -100,13 +100,6 @@ enum MAKEROBOTTurnDirection {
 }
 
 // --- NEW REMOTE ENUMS ---
-enum MAKEROBOTRemoteMode {
-    //% block="TRACER"
-    Tracer,
-    //% block="BLITZ"
-    Blitz
-}
-
 enum MAKEROBOTRemoteButton {
     //% block="B1"
     B1,
@@ -245,47 +238,15 @@ namespace MAKEROBOT {
     // Chassis type flag (Default is 4-Wheel mode = false)
     let isIsobotMode = false;
 
-    // MAKEROBOT Remote Variables
-    let currentRemoteMode = MAKEROBOTRemoteMode.Blitz
-    let remoteRunning = false
-    let remoteLastDir = ""
-
     // Ultrasonic Background Task
     control.inBackground(function () {
         while (true) {
             if (ultrasonicEnabled) {
                 readUltrasonicNow()
-                basic.pause(50) // FASTER REFLEXES for if/else logic
+                basic.pause(50) 
             } else {
                 basic.pause(50)
             }
-        }
-    })
-
-    // Remote Background Task (Anti-Spam Logic)
-    control.inBackground(function () {
-        while (true) {
-            // Only run the auto-transmitter if the remote is actively in TRACER mode
-            if (remoteRunning && currentRemoteMode == MAKEROBOTRemoteMode.Tracer) {
-                let currentDir = "STOP"
-
-                if (remoteRocker(MAKEROBOTRocker.Up)) {
-                    currentDir = "UP"
-                } else if (remoteRocker(MAKEROBOTRocker.Down)) {
-                    currentDir = "DOWN"
-                } else if (remoteRocker(MAKEROBOTRocker.Left)) {
-                    currentDir = "LEFT"
-                } else if (remoteRocker(MAKEROBOTRocker.Right)) {
-                    currentDir = "RIGHT"
-                }
-
-                // State-Change Logic: Only send when direction changes!
-                if (currentDir != remoteLastDir) {
-                    radio.sendString(currentDir)
-                    remoteLastDir = currentDir
-                }
-            }
-            basic.pause(30)
         }
     })
 
@@ -634,18 +595,19 @@ namespace MAKEROBOT {
     // MAKEROBOT REMOTE BLOCKS
     // ==========================================
 
+    let lastSentCommand = ""
+
     /**
-     * Start the MAKEROBOT remote on a specific radio group. 
-     * TRACER mode auto-sends grid commands (Anti-Spam). BLITZ mode acts as standard RC.
+     * Send a radio command string without spamming. It only transmits when the string changes.
      */
-    //% block="start remote as %mode on radio group %group"
-    //% group.defl=1
+    //% block="send TRACER command %command"
     //% subcategory="MAKEROBOT Remote"
     //% weight=105
-    export function startRemote(mode: MAKEROBOTRemoteMode, group: number): void {
-        radio.setGroup(group)
-        currentRemoteMode = mode
-        remoteRunning = true
+    export function sendTracerCommand(command: string): void {
+        if (command != lastSentCommand) {
+            radio.sendString(command)
+            lastSentCommand = command
+        }
     }
 
     /**
