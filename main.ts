@@ -352,17 +352,6 @@ namespace MAKEROBOT {
         }
     }
 
-    /**
-     * Use this block to check which command the robot received!
-     */
-    //% block="TRACER command %command"
-    //% subcategory="TRACER Junior"
-    //% group="Semi Auto"
-    //% weight=70
-    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
-        return command;
-    }
-
     // ==========================================
     // TRACER SENIOR BLOCKS
     // ==========================================
@@ -619,9 +608,6 @@ namespace MAKEROBOT {
     // MAKEROBOT REMOTE BLOCKS
     // ==========================================
 
-    let lastSentCommand = -1
-    let lastSendTime = 0
-
     /**
      * Check the state of the gamepad rocker (joystick).
      */
@@ -757,21 +743,14 @@ namespace MAKEROBOT {
     }
 
     /**
-     * Send a TRACER radio command without spamming. (Uses fast numbers behind the scenes!)
+     * Use this block to check which command the robot received! (Or snap into a radio block to send it)
      */
-    //% block="send TRACER command %command"
+    //% block="TRACER command %command"
     //% subcategory="MAKEROBOT Remote"
     //% group="TRACER Semi Auto"
     //% weight=10
-    export function sendTracerCommand(command: MAKEROBOTTracerCommand): void {
-        let currentTime = input.runningTime()
-        
-        // Send if the command CHANGED, OR if 100ms has passed (Heartbeat)
-        if (command != lastSentCommand || currentTime - lastSendTime > 100) {
-            radio.sendNumber(command)
-            lastSentCommand = command
-            lastSendTime = currentTime
-        }
+    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
+        return command;
     }
 
 
