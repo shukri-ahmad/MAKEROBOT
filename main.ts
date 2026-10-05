@@ -309,7 +309,7 @@ namespace MAKEROBOT {
         }
 
         // ADDED FOR KIDS: Hidden delay to let physical momentum settle and sensor ping catch up!
-        basic.pause(200)
+        // basic.pause(200)
     }
 
     /**
