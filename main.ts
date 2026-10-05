@@ -242,15 +242,36 @@ namespace MAKEROBOT {
     let remoteRunning = false
     let lastSentCommand = ""
     let remoteIsBusy = false 
+    let busyTimer = 0
 
+    // GLOBAL LISTENER: This forces the receiver on and catches the ACK safely
+    radio.onReceivedValue(function (name: string, value: number) {
+        if (name == "TRACER_ACK" && value == 1) {
+            remoteIsBusy = false
+            busyTimer = 0
+        }
+    })
+
+    // BACKGROUND TASKS (Sensors & Auto-Unlock Timeout)
     control.inBackground(function () {
         while (true) {
+            // Ultrasonic sensor polling
             if (ultrasonicEnabled) {
                 readUltrasonicNow()
-                basic.pause(50) 
-            } else {
-                basic.pause(50)
             }
+            
+            // Remote 3-Second Fail-Safe Timer
+            if (remoteIsBusy) {
+                busyTimer++
+                if (busyTimer >= 30) { // ~3 seconds
+                    remoteIsBusy = false
+                    busyTimer = 0
+                }
+            } else {
+                busyTimer = 0
+            }
+
+            basic.pause(100) 
         }
     })
 
@@ -550,13 +571,7 @@ namespace MAKEROBOT {
         currentRemoteMode = mode
         remoteRunning = true
         remoteIsBusy = false
-
-        // FORCE MakeCode to turn on the radio receiver so it hears the READY signal
-        radio.onReceivedString(function (receivedString: string) {
-            if (receivedString == "READY") {
-                remoteIsBusy = false
-            }
-        })
+        busyTimer = 0
     }
 
     /**
@@ -578,6 +593,7 @@ namespace MAKEROBOT {
                 radio.sendString(command)
                 lastSentCommand = command
                 remoteIsBusy = true // Lock the remote until the robot says READY
+                busyTimer = 0       // Reset the timeout clock
             }
         }
     }
@@ -589,7 +605,7 @@ namespace MAKEROBOT {
     //% subcategory="MAKEROBOT Remote"
     //% weight=104
     export function sendTracerReady(): void {
-        radio.sendString("READY")
+        radio.sendValue("TRACER_ACK", 1)
     }
 
     /**
