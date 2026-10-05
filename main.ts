@@ -243,13 +243,6 @@ namespace MAKEROBOT {
     let lastSentCommand = ""
     let remoteIsBusy = false 
 
-    // Listen for the "READY" signal from the robot
-    radio.onReceivedValue(function (name: string, value: number) {
-        if (name == "TRACER_ACK" && value == 1) {
-            remoteIsBusy = false
-        }
-    })
-
     control.inBackground(function () {
         while (true) {
             if (ultrasonicEnabled) {
@@ -557,6 +550,13 @@ namespace MAKEROBOT {
         currentRemoteMode = mode
         remoteRunning = true
         remoteIsBusy = false
+
+        // FORCE MakeCode to turn on the radio receiver so it hears the READY signal
+        radio.onReceivedString(function (receivedString: string) {
+            if (receivedString == "READY") {
+                remoteIsBusy = false
+            }
+        })
     }
 
     /**
@@ -589,8 +589,7 @@ namespace MAKEROBOT {
     //% subcategory="MAKEROBOT Remote"
     //% weight=104
     export function sendTracerReady(): void {
-        // Sends a specific value so it doesn't trigger standard string blocks
-        radio.sendValue("TRACER_ACK", 1)
+        radio.sendString("READY")
     }
 
     /**
