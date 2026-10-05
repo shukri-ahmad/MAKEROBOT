@@ -100,6 +100,19 @@ enum MAKEROBOTTurnDirection {
 }
 
 // --- NEW REMOTE ENUMS ---
+enum MAKEROBOTTracerCommand {
+    //% block="UP"
+    Up = 1,
+    //% block="DOWN"
+    Down = 2,
+    //% block="LEFT"
+    Left = 3,
+    //% block="RIGHT"
+    Right = 4,
+    //% block="STOP"
+    Stop = 0
+}
+
 enum MAKEROBOTRemoteButton {
     //% block="B1"
     B1,
@@ -595,19 +608,34 @@ namespace MAKEROBOT {
     // MAKEROBOT REMOTE BLOCKS
     // ==========================================
 
-    let lastSentCommand = ""
+    let lastSentCommand = -1
+    let lastSendTime = 0
 
     /**
-     * Send a radio command string without spamming. It only transmits when the string changes.
+     * Send a TRACER radio command without spamming. (Uses fast numbers behind the scenes!)
      */
     //% block="send TRACER command %command"
     //% subcategory="MAKEROBOT Remote"
     //% weight=105
-    export function sendTracerCommand(command: string): void {
-        if (command != lastSentCommand) {
-            radio.sendString(command)
+    export function sendTracerCommand(command: MAKEROBOTTracerCommand): void {
+        let currentTime = input.runningTime()
+        
+        // Send if the command CHANGED, OR if 100ms has passed (Heartbeat)
+        if (command != lastSentCommand || currentTime - lastSendTime > 100) {
+            radio.sendNumber(command)
             lastSentCommand = command
+            lastSendTime = currentTime
         }
+    }
+
+    /**
+     * Use this block to check which command the robot received!
+     */
+    //% block="TRACER command %command"
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=104
+    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
+        return command;
     }
 
     /**
