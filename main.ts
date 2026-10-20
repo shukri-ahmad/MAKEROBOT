@@ -332,12 +332,12 @@ namespace MAKEROBOT {
         if (finalDelay == 0) {
             if (isIsobotMode) {
                 // Original ISOBOT 2-Wheel Delay Map
-                finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100));
+                finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100))+400;
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
                 // 4-Wheel Delay Map
                 finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
-                finalDelay = Math.clamp(50, 1000, finalDelay);
+                finalDelay = Math.clamp(50, 1400, finalDelay);
             }
         }
 
