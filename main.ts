@@ -317,34 +317,40 @@ namespace MAKEROBOT {
 
     /**
      * Follow the line until the robot reaches a cross or obstacle.
-     * In JS: robotLineFollowUntil(until, speed, stopDelay)
+     * Click '+' to override the default speed (0 = Auto: 200 for 4-Wheel, 180 for ISOBOT).
      */
     //% block="robot line follow until %until"
-    //% speed.defl=180
+    //% speed.defl=0
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=90
-    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 180, stopDelay: number = 0): void {
+    export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 0, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
+        
+        // AUTO-SPEED LOGIC
+        let actualSpeed = speed;
+        if (actualSpeed == 0) {
+            actualSpeed = isIsobotMode ? 180 : 200;
+        }
         
         let finalDelay = stopDelay;
         
         if (finalDelay == 0) {
             if (isIsobotMode) {
                 // Original ISOBOT 2-Wheel Delay Map
-                finalDelay = Math.trunc(pins.map(speed, 0, 255, 1200, 100))+400;
+                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 1200, 100));
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
-                // 4-Wheel Delay Map
-                finalDelay = Math.trunc(pins.map(speed, 0, 255, 400, 100));
+                // 4-Wheel Delay Map (+400ms added for extra cross clearance)
+                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 300;
                 finalDelay = Math.clamp(50, 1400, finalDelay);
             }
         }
 
         if (until == MAKEROBOTLineFollowUntil.Obstacle) {
-            lineFollowUntilObstacleWithPin(AnalogReadWritePin.P0, speed, 10)
+            lineFollowUntilObstacleWithPin(AnalogReadWritePin.P0, actualSpeed, 10)
         } else {
-            lineFollowWithPin(AnalogReadWritePin.P0, speed, true, finalDelay)
+            lineFollowWithPin(AnalogReadWritePin.P0, actualSpeed, true, finalDelay)
         }
     }
 
@@ -362,18 +368,24 @@ namespace MAKEROBOT {
 
     /**
      * Go left or right from the current line position.
-     * In JS: robotTurn(move, speed)
+     * Click '+' to override the default speed (0 = Auto: 200 for 4-Wheel, 180 for ISOBOT).
      */
     //% block="robot turn %move"
-    //% speed.defl=180
+    //% speed.defl=0
     //% subcategory="TRACER Junior"
     //% group="Movement"
     //% weight=80
-    export function robotTurn(move: MAKEROBOTMove, speed: number = 180): void {
+    export function robotTurn(move: MAKEROBOTMove, speed: number = 0): void {
+        // AUTO-SPEED LOGIC
+        let actualSpeed = speed;
+        if (actualSpeed == 0) {
+            actualSpeed = isIsobotMode ? 180 : 200;
+        }
+
         if (move == MAKEROBOTMove.Right) {
-            turnToLineWithPin(MAKEROBOTTurnDirection.Right, speed, AnalogReadWritePin.P0)
+            turnToLineWithPin(MAKEROBOTTurnDirection.Right, actualSpeed, AnalogReadWritePin.P0)
         } else if (move == MAKEROBOTMove.Left) {
-            turnToLineWithPin(MAKEROBOTTurnDirection.Left, speed, AnalogReadWritePin.P0)
+            turnToLineWithPin(MAKEROBOTTurnDirection.Left, actualSpeed, AnalogReadWritePin.P0)
         }
     }
 
@@ -964,353 +976,4 @@ namespace MAKEROBOT {
             runMotorSingle(leftMotorChannel1, 0);
             runMotorSingle(leftMotorChannel2, motorSpeed);
             runMotorSingle(rightMotorChannel1, motorSpeed);
-            runMotorSingle(rightMotorChannel2, 0);
-        } else if (direction == BLITZMecanum.BackwardRight) {
-            runMotorSingle(leftMotorChannel1, 0);
-            runMotorSingle(leftMotorChannel2, -motorSpeed);
-            runMotorSingle(rightMotorChannel1, -motorSpeed);
-            runMotorSingle(rightMotorChannel2, 0);
-        } else if (direction == BLITZMecanum.BackwardLeft) {
-            runMotorSingle(leftMotorChannel1, -motorSpeed);
-            runMotorSingle(leftMotorChannel2, 0);
-            runMotorSingle(rightMotorChannel1, 0);
-            runMotorSingle(rightMotorChannel2, -motorSpeed);
-        }
-    }
-
-    // ==========================================
-    // INTERNAL FUNCTIONS (HIDDEN)
-    // ==========================================
-
-    function showTrimLed(): void {
-        // Map the -50 to 50 range onto the 5 horizontal LEDs
-        let x = 2;
-        if (robotTrim <= -20) x = 0;
-        else if (robotTrim < 0) x = 1;
-        else if (robotTrim >= 20) x = 4;
-        else if (robotTrim > 0) x = 3;
-
-        basic.clearScreen();
-        
-        for (let i = 0; i < 5; i++) {
-            led.plot(i, 2); 
-        }
-        
-        led.plot(x, 1);
-        led.plot(x, 0); 
-        led.plot(2, 3); 
-    }
-
-    function lineFollowWithPin(pin: AnalogReadWritePin, speed: number, cross: boolean, stopTimer: number): void {
-        const baseSpeed = limit(speed, 0, 255)
-        let speedLeft = baseSpeed
-        let speedRight = baseSpeed
-        let crossFound = false
-        let endTime = 0
-        let timerEndTime = 0
-
-        resetPid()
-
-        if (!cross && stopTimer > 0) {
-            timerEndTime = input.runningTime() + stopTimer
-        }
-
-        while (true) {
-            const adc = pins.analogReadPin(pin)
-
-            if (!cross && timerEndTime > 0 && input.runningTime() >= timerEndTime) {
-                break
-            }
-
-            if (adc > 941 && cross) {
-                if (stopTimer <= 0) {
-                    break
-                }
-
-                if (!crossFound) {
-                    crossFound = true
-                    endTime = input.runningTime() + stopTimer
-                }
-            }
-
-            if (crossFound && input.runningTime() >= endTime) {
-                break
-            }
-
-            if (adc < 81) {
-                if (lastError < 0) {
-                    speedLeft = 0
-                    speedRight = baseSpeed
-                } else {
-                    speedLeft = baseSpeed
-                    speedRight = 0
-                }
-            } else if (adc > 941) {
-                speedLeft = baseSpeed
-                speedRight = baseSpeed
-            } else {
-                const powerDiff = limit(pidPowerDiff(adc), -baseSpeed, baseSpeed)
-
-                if (powerDiff < 0) {
-                    speedLeft = baseSpeed + powerDiff
-                    speedRight = baseSpeed
-                } else {
-                    speedLeft = baseSpeed
-                    speedRight = baseSpeed - powerDiff
-                }
-            }
-
-            runLineMotors(speedLeft, speedRight)
-            basic.pause(5)
-        }
-
-        robotStop()
-    }
-
-    function lineFollowUntilObstacleWithPin(pin: AnalogReadWritePin, speed: number, obstacleDistance: number): void {
-        const baseSpeed = limit(speed, 0, 255)
-        let speedLeft = baseSpeed
-        let speedRight = baseSpeed
-
-        resetPid()
-        readUltrasonic()
-
-        while (true) {
-            if (ultrasonicDistance <= obstacleDistance) {
-                break
-            }
-
-            const adc = pins.analogReadPin(pin)
-
-            if (adc < 81) {
-                if (lastError < 0) {
-                    speedLeft = 0
-                    speedRight = baseSpeed
-                } else {
-                    speedLeft = baseSpeed
-                    speedRight = 0
-                }
-            } else if (adc > 941) {
-                speedLeft = baseSpeed
-                speedRight = baseSpeed
-            } else {
-                const powerDiff = limit(pidPowerDiff(adc), -baseSpeed, baseSpeed)
-
-                if (powerDiff < 0) {
-                    speedLeft = baseSpeed + powerDiff
-                    speedRight = baseSpeed
-                } else {
-                    speedLeft = baseSpeed
-                    speedRight = baseSpeed - powerDiff
-                }
-            }
-
-            runLineMotors(speedLeft, speedRight)
-            basic.pause(5)
-        }
-
-        robotStop()
-    }
-
-    function turnToLineWithPin(direction: MAKEROBOTTurnDirection, speed: number, pin: AnalogReadWritePin): void {
-        const motorSpeed = limit(speed, 0, 255)
-
-        if (direction == MAKEROBOTTurnDirection.Left) {
-            runMotorSignedLeft(-motorSpeed)
-            runMotorSignedRight(motorSpeed)
-        } else {
-            runMotorSignedLeft(motorSpeed)
-            runMotorSignedRight(-motorSpeed)
-        }
-
-        while (pins.analogReadPin(pin) >= 81) {
-            basic.pause(5)
-        }
-
-        basic.pause(200)
-
-        while (pins.analogReadPin(pin) < 81) {
-            basic.pause(5)
-        }
-
-        robotStop()
-    }
-
-    function pidPowerDiff(adc: number): number {
-        const error = adc - pidSetpoint
-        const derivative = error - lastError
-
-        integral += error
-        lastError = error
-
-        return error * pidKp + derivative * pidKd + integral * pidKi
-    }
-
-    function runLineMotors(speedLeft: number, speedRight: number): void {
-        runMotorSignedLeft(limit(speedLeft, 0, 255))
-        runMotorSignedRight(limit(speedRight, 0, 255))
-    }
-
-    function runMotorSignedLeft(speed: number): void {
-        const motorSpeed = limit(Math.abs(speed), 0, 255)
-
-        if (speed >= 0) {
-            motionbit.runMotor(leftMotorChannel1, MotionBitMotorDirection.Forward, motorSpeed)
-            motionbit.runMotor(leftMotorChannel2, MotionBitMotorDirection.Forward, motorSpeed)
-        } else {
-            motionbit.runMotor(leftMotorChannel1, MotionBitMotorDirection.Backward, motorSpeed)
-            motionbit.runMotor(leftMotorChannel2, MotionBitMotorDirection.Backward, motorSpeed)
-        }
-    }
-
-    function runMotorSignedRight(speed: number): void {
-        const motorSpeed = limit(Math.abs(speed), 0, 255)
-
-        if (speed >= 0) {
-            motionbit.runMotor(rightMotorChannel1, MotionBitMotorDirection.Forward, motorSpeed)
-            motionbit.runMotor(rightMotorChannel2, MotionBitMotorDirection.Forward, motorSpeed)
-        } else {
-            motionbit.runMotor(rightMotorChannel1, MotionBitMotorDirection.Backward, motorSpeed)
-            motionbit.runMotor(rightMotorChannel2, MotionBitMotorDirection.Backward, motorSpeed)
-        }
-    }
-    
-    function runMotorSingle(channel: MotionBitMotorChannel, speed: number): void {
-        const motorSpeed = limit(Math.abs(speed), 0, 255)
-
-        if (speed >= 0) {
-            motionbit.runMotor(channel, MotionBitMotorDirection.Forward, motorSpeed)
-        } else {
-            motionbit.runMotor(channel, MotionBitMotorDirection.Backward, motorSpeed)
-        }
-    }
-
-    function enterCalibration(pin: DigitalPin): void {
-        pins.digitalWritePin(pin, 0)
-        basic.pause(2100)
-        pins.digitalWritePin(pin, 1)
-    }
-
-    function exitCalibration(pin: DigitalPin): void {
-        pins.digitalWritePin(pin, 0)
-        basic.pause(100)
-        pins.digitalWritePin(pin, 1)
-    }
-
-    function readUltrasonicNow(): void {
-        pins.digitalWritePin(ultrasonicTrigPin, 0)
-        control.waitMicros(2)
-        pins.digitalWritePin(ultrasonicTrigPin, 1)
-        control.waitMicros(10)
-        pins.digitalWritePin(ultrasonicTrigPin, 0)
-
-        let pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
-        let dist = pulse == 0 ? 255 : Math.idiv(pulse, ultrasonicDivisor)
-
-        // Ghost Echo Filter: If it was blocked, but now says clear, double check!
-        if (dist > 20 && ultrasonicDistance <= 20) {
-            basic.pause(10) // wait for echoes to die down
-            pins.digitalWritePin(ultrasonicTrigPin, 0)
-            control.waitMicros(2)
-            pins.digitalWritePin(ultrasonicTrigPin, 1)
-            control.waitMicros(10)
-            pins.digitalWritePin(ultrasonicTrigPin, 0)
-            
-            pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
-            dist = pulse == 0 ? 255 : Math.idiv(pulse, ultrasonicDivisor)
-        }
-
-        ultrasonicDistance = dist
-    }
-
-    function linePinValue(pin: MAKEROBOTLinePin): AnalogReadWritePin {
-        if (pin == MAKEROBOTLinePin.P1) {
-            return AnalogReadWritePin.P1
-        } else if (pin == MAKEROBOTLinePin.P2) {
-            return AnalogReadWritePin.P2
-        } else {
-            return AnalogReadWritePin.P0
-        }
-    }
-
-    function ultrasonicPinValue(pin: MAKEROBOTUltrasonicPin): DigitalPin {
-        if (pin == MAKEROBOTUltrasonicPin.P1) {
-            return DigitalPin.P1
-        } else if (pin == MAKEROBOTUltrasonicPin.P2) {
-            return DigitalPin.P2
-        } else if (pin == MAKEROBOTUltrasonicPin.P9) {
-            return DigitalPin.P9
-        } else if (pin == MAKEROBOTUltrasonicPin.P12) {
-            return DigitalPin.P12
-        } else if (pin == MAKEROBOTUltrasonicPin.P13) {
-            return DigitalPin.P13
-        } else if (pin == MAKEROBOTUltrasonicPin.P14) {
-            return DigitalPin.P14
-        } else if (pin == MAKEROBOTUltrasonicPin.P15) {
-            return DigitalPin.P15
-        } else if (pin == MAKEROBOTUltrasonicPin.P16) {
-            return DigitalPin.P16
-        } else {
-            return DigitalPin.P0
-        }
-    }
-
-    function makerLinePinValue(pin: MAKEROBOTMakerLinePin): DigitalPin {
-        if (pin == MAKEROBOTMakerLinePin.P13) {
-            return DigitalPin.P13
-        } else if (pin == MAKEROBOTMakerLinePin.P14) {
-            return DigitalPin.P14
-        } else if (pin == MAKEROBOTMakerLinePin.P15) {
-            return DigitalPin.P15
-        } else if (pin == MAKEROBOTMakerLinePin.P16) {
-            return DigitalPin.P16
-        } else {
-            return DigitalPin.P12
-        }
-    }
-
-    function makerLineDetected(pin: DigitalPin): boolean {
-        return pins.digitalReadPin(pin) == 1
-    }
-
-    function makerLineSignalMatches(pin: DigitalPin, signal: MAKEROBOTLineSignal): boolean {
-        if (signal == MAKEROBOTLineSignal.Any) {
-            return true
-        }
-
-        return makerLineDetected(pin) == (signal == MAKEROBOTLineSignal.On)
-    }
-
-    function calibrationPinValue(pin: MAKEROBOTCalibrationPin): DigitalPin {
-        if (pin == MAKEROBOTCalibrationPin.P12) {
-            return DigitalPin.P12
-        } else if (pin == MAKEROBOTCalibrationPin.P13) {
-            return DigitalPin.P13
-        } else if (pin == MAKEROBOTCalibrationPin.P14) {
-            return DigitalPin.P14
-        } else if (pin == MAKEROBOTCalibrationPin.P15) {
-            return DigitalPin.P15
-        } else if (pin == MAKEROBOTCalibrationPin.P16) {
-            return DigitalPin.P16
-        } else {
-            return DigitalPin.P9
-        }
-    }
-
-    function resetPid(): void {
-        lastError = 0
-        integral = 0
-    }
-
-    function limit(value: number, min: number, max: number): number {
-        if (value < min) {
-            return min
-        }
-
-        if (value > max) {
-            return max
-        }
-
-        return value
-    }
-}
+            runMotorSingle(rightMotorChannel
