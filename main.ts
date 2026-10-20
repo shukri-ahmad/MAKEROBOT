@@ -342,7 +342,7 @@ namespace MAKEROBOT {
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
                 // 4-Wheel Delay Map (+400ms added for extra cross clearance)
-                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 400;
+                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 100;
                 finalDelay = Math.clamp(50, 1400, finalDelay);
             }
         }
