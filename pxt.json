@@ -1,6 +1,6 @@
 {
     "name": "MAKEROBOT",
-    "version": "2.4.3",
+    "version": "2.4.4",
     "description": "MakeCode micro:bit extension for UTHM MAKEROBOT TRACER and BLITZ robot",
     "dependencies": {
         "core": "*",
