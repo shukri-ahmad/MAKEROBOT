@@ -238,11 +238,72 @@ enum BLITZMecanum {
     BackwardRight
 }
 
+// --- MAKEROBOT APPS ENUMS ---
+enum MAKEROBOTAppButtonState {
+    //% block="pressed"
+    Pressed,
+    //% block="released"
+    Released
+}
+
+enum MAKEROBOTTracerAppButton {
+    //% block="D-Pad UP"
+    Up,
+    //% block="D-Pad DOWN"
+    Down,
+    //% block="D-Pad LEFT"
+    Left,
+    //% block="D-Pad RIGHT"
+    Right,
+    //% block="CALIBRATE"
+    Calibrate
+}
+
+enum MAKEROBOTBlitzAppButton {
+    //% block="Triangle (Green)"
+    Triangle,
+    //% block="Square (Pink)"
+    Square,
+    //% block="Circle (Red)"
+    Circle,
+    //% block="Cross (Blue)"
+    Cross,
+    //% block="D-Pad UP"
+    Up,
+    //% block="D-Pad DOWN"
+    Down,
+    //% block="D-Pad LEFT"
+    Left,
+    //% block="D-Pad RIGHT"
+    Right
+}
+
+enum MAKEROBOTBlitzAppJoystick {
+    //% block="FORWARD"
+    Forward,
+    //% block="BACKWARD"
+    Backward,
+    //% block="SLIDE LEFT"
+    Left,
+    //% block="SLIDE RIGHT"
+    Right,
+    //% block="FORWARD-LEFT"
+    ForwardLeft,
+    //% block="FORWARD-RIGHT"
+    ForwardRight,
+    //% block="BACKWARD-LEFT"
+    BackwardLeft,
+    //% block="BACKWARD-RIGHT"
+    BackwardRight,
+    //% block="NEUTRAL (STOP)"
+    Neutral
+}
+
 
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "MAKEROBOT Remote", "BLITZ Robot"]
-//% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto", "BLITZ Remote"]
+//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Robot", "MAKEROBOT Remote", "MAKEROBOT Apps"]
+//% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto", "BLITZ Remote", "Tracer App", "Blitz App", "App Telemetry"]
 namespace MAKEROBOT {
     let lastError = 0
     let integral = 0
@@ -342,7 +403,7 @@ namespace MAKEROBOT {
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
                 // 4-Wheel Delay Map (+400ms added for extra cross clearance)
-                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 100;
+                finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 400;
                 finalDelay = Math.clamp(50, 1400, finalDelay);
             }
         }
@@ -642,167 +703,6 @@ namespace MAKEROBOT {
     }
 
     // ==========================================
-    // MAKEROBOT REMOTE BLOCKS
-    // ==========================================
-
-    /**
-     * Check the state of the gamepad rocker (joystick).
-     */
-    //% block="remote rocker %value"
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=100
-    export function remoteRocker(value: MAKEROBOTRocker): boolean {
-        pins.setPull(DigitalPin.P8, PinPullMode.PullUp);
-        let x = pins.analogReadPin(AnalogPin.P1);
-        let y = pins.analogReadPin(AnalogPin.P2);
-        let z = pins.digitalReadPin(DigitalPin.P8);
-        
-        let now_state = MAKEROBOTRocker.None;
-        
-        let isUp = x < 200;
-        let isDown = x > 730;
-        let isRight = y < 200;
-        let isLeft = y > 730;
-
-        if (isUp && isRight) {
-            now_state = MAKEROBOTRocker.UpRight;
-        } else if (isDown && isRight) {
-            now_state = MAKEROBOTRocker.DownRight;
-        } else if (isDown && isLeft) {
-            now_state = MAKEROBOTRocker.DownLeft;
-        } else if (isUp && isLeft) {
-            now_state = MAKEROBOTRocker.UpLeft;
-        } 
-        else if (isUp) {
-            now_state = MAKEROBOTRocker.Up;
-        } else if (isDown) {
-            now_state = MAKEROBOTRocker.Down;
-        } else if (isRight) {
-            now_state = MAKEROBOTRocker.Right;
-        } else if (isLeft) {
-            now_state = MAKEROBOTRocker.Left;
-        }
-        
-        if (z == 0) {
-            now_state = MAKEROBOTRocker.Press;
-        }
-        
-        return now_state == value;
-    }
-
-    /**
-     * Check the state of the gamepad buttons.
-     */
-    //% block="remote button %num is %value"
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=90
-    export function remoteButton(num: MAKEROBOTRemoteButton, value: MAKEROBOTButtonState): boolean {
-        let temp = false;
-        switch (num) {
-            case MAKEROBOTRemoteButton.B1: {
-                pins.setPull(DigitalPin.P13, PinPullMode.PullUp);
-                if (pins.digitalReadPin(DigitalPin.P13) == value) { temp = true; }
-                break;
-            }
-            case MAKEROBOTRemoteButton.B2: {
-                pins.setPull(DigitalPin.P14, PinPullMode.PullUp);
-                if (pins.digitalReadPin(DigitalPin.P14) == value) { temp = true; }
-                break;
-            }
-            case MAKEROBOTRemoteButton.B3: {
-                pins.setPull(DigitalPin.P15, PinPullMode.PullUp);
-                if (pins.digitalReadPin(DigitalPin.P15) == value) { temp = true; }
-                break;
-            }
-            case MAKEROBOTRemoteButton.B4: {
-                pins.setPull(DigitalPin.P16, PinPullMode.PullUp);
-                if (pins.digitalReadPin(DigitalPin.P16) == value) { temp = true; }
-                break;
-            }
-        }
-        return temp;
-    }
-
-    /**
-     * Read the pitch or roll of the remote and map it to a specific output range.
-     */
-    //% block="remote motion %axis angle from %startAngle to %endAngle map to %outStart to %outEnd"
-    //% startAngle.defl=-90 endAngle.defl=90
-    //% outStart.defl=-255 outEnd.defl=255
-    //% inlineInputMode=inline
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=80
-    export function remoteMotion(axis: MAKEROBOTAxis, startAngle: number, endAngle: number, outStart: number, outEnd: number): number {
-        let angle = 0;
-        
-        if (axis == MAKEROBOTAxis.Pitch) {
-            angle = input.rotation(Rotation.Pitch);
-        } else {
-            angle = input.rotation(Rotation.Roll);
-        }
-        
-        // Ensure angle is clamped between the user's start and end angles
-        let minAngle = Math.min(startAngle, endAngle);
-        let maxAngle = Math.max(startAngle, endAngle);
-        let constrainedAngle = Math.clamp(minAngle, maxAngle, angle);
-        
-        // Map the angle to the output range
-        let mapped = pins.map(constrainedAngle, startAngle, endAngle, outStart, outEnd);
-        
-        // Clamp the final output just in case of weird math bounds
-        let minOut = Math.min(outStart, outEnd);
-        let maxOut = Math.max(outStart, outEnd);
-        
-        return Math.clamp(minOut, maxOut, Math.trunc(mapped));
-    }
-    
-    /**
-     * Check if the remote is tilted in a specific direction (with a 30-degree deadzone).
-     */
-    //% block="remote tilted %direction"
-    //% subcategory="MAKEROBOT Remote"
-    //% weight=75
-    export function remoteTilted(direction: MAKEROBOTGyroDirection): boolean {
-        let pitch = input.rotation(Rotation.Pitch);
-        let roll = input.rotation(Rotation.Roll);
-
-        if (direction == MAKEROBOTGyroDirection.PitchForward) {
-            return pitch > 30;
-        } else if (direction == MAKEROBOTGyroDirection.PitchBackward) {
-            return pitch < -30;
-        } else if (direction == MAKEROBOTGyroDirection.RollLeft) {
-            return roll < -30;
-        } else if (direction == MAKEROBOTGyroDirection.RollRight) {
-            return roll > 30;
-        }
-        
-        return false;
-    }
-
-    /**
-     * Use this block to check which command the robot received! (Or snap into a radio block to send it)
-     */
-    //% block="TRACER command %command"
-    //% subcategory="MAKEROBOT Remote"
-    //% group="TRACER Semi Auto"
-    //% weight=10
-    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
-        return command;
-    }
-
-    /**
-     * Use this block to check which command the BLITZ robot received! (Or snap into a radio block to send it)
-     */
-    //% block="BLITZ command %command"
-    //% subcategory="MAKEROBOT Remote"
-    //% group="BLITZ Remote"
-    //% weight=9
-    export function readBlitzCommand(command: MAKEROBOTBlitzCommand): number {
-        return command;
-    }
-
-
-    // ==========================================
     // BLITZ ROBOT BLOCKS
     // ==========================================
 
@@ -814,7 +714,6 @@ namespace MAKEROBOT {
     //% group="Setup"
     //% weight=105
     export function blitzCalibrateAlignment(): void {
-        // ANTI-BOUNCE: If triggered via a button event, wait for release first
         while (input.buttonIsPressed(Button.A) || input.buttonIsPressed(Button.B) || input.logoIsPressed()) {
             basic.pause(10);
         }
@@ -830,14 +729,12 @@ namespace MAKEROBOT {
             } else if (input.buttonIsPressed(Button.A)) {
                 robotTrim = limit(robotTrim - 5, -50, 50);
                 showTrimLed();
-                // Wait until A is released to prevent runaway scrolling
                 while(input.buttonIsPressed(Button.A)) {
                     basic.pause(10);
                 }
             } else if (input.buttonIsPressed(Button.B)) {
                 robotTrim = limit(robotTrim + 5, -50, 50);
                 showTrimLed();
-                // Wait until B is released
                 while(input.buttonIsPressed(Button.B)) {
                     basic.pause(10);
                 }
@@ -848,7 +745,6 @@ namespace MAKEROBOT {
                 basic.showIcon(IconNames.Yes);
                 basic.pause(1000);
                 basic.clearScreen();
-                // Wait for all buttons to be fully released before exiting the function
                 while (input.buttonIsPressed(Button.A) || input.buttonIsPressed(Button.B) || input.logoIsPressed()) {
                     basic.pause(10);
                 }
@@ -873,10 +769,8 @@ namespace MAKEROBOT {
 
         if (direction == BLITZMove.Forward || direction == BLITZMove.Backward) {
             if (robotTrim < 0) {
-                // robotTrim is negative, so adding it reduces leftSpeed
                 leftSpeed += robotTrim; 
             } else if (robotTrim > 0) {
-                // robotTrim is positive, so subtracting it reduces rightSpeed
                 rightSpeed -= robotTrim; 
             }
         }
@@ -991,11 +885,251 @@ namespace MAKEROBOT {
     }
 
     // ==========================================
+    // MAKEROBOT REMOTE BLOCKS
+    // ==========================================
+
+    /**
+     * Check the state of the gamepad rocker (joystick).
+     */
+    //% block="remote rocker %value"
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=100
+    export function remoteRocker(value: MAKEROBOTRocker): boolean {
+        pins.setPull(DigitalPin.P8, PinPullMode.PullUp);
+        let x = pins.analogReadPin(AnalogPin.P1);
+        let y = pins.analogReadPin(AnalogPin.P2);
+        let z = pins.digitalReadPin(DigitalPin.P8);
+        
+        let now_state = MAKEROBOTRocker.None;
+        
+        let isUp = x < 200;
+        let isDown = x > 730;
+        let isRight = y < 200;
+        let isLeft = y > 730;
+
+        if (isUp && isRight) {
+            now_state = MAKEROBOTRocker.UpRight;
+        } else if (isDown && isRight) {
+            now_state = MAKEROBOTRocker.DownRight;
+        } else if (isDown && isLeft) {
+            now_state = MAKEROBOTRocker.DownLeft;
+        } else if (isUp && isLeft) {
+            now_state = MAKEROBOTRocker.UpLeft;
+        } 
+        else if (isUp) {
+            now_state = MAKEROBOTRocker.Up;
+        } else if (isDown) {
+            now_state = MAKEROBOTRocker.Down;
+        } else if (isRight) {
+            now_state = MAKEROBOTRocker.Right;
+        } else if (isLeft) {
+            now_state = MAKEROBOTRocker.Left;
+        }
+        
+        if (z == 0) {
+            now_state = MAKEROBOTRocker.Press;
+        }
+        
+        return now_state == value;
+    }
+
+    /**
+     * Check the state of the gamepad buttons.
+     */
+    //% block="remote button %num is %value"
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=90
+    export function remoteButton(num: MAKEROBOTRemoteButton, value: MAKEROBOTButtonState): boolean {
+        let temp = false;
+        switch (num) {
+            case MAKEROBOTRemoteButton.B1: {
+                pins.setPull(DigitalPin.P13, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P13) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B2: {
+                pins.setPull(DigitalPin.P14, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P14) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B3: {
+                pins.setPull(DigitalPin.P15, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P15) == value) { temp = true; }
+                break;
+            }
+            case MAKEROBOTRemoteButton.B4: {
+                pins.setPull(DigitalPin.P16, PinPullMode.PullUp);
+                if (pins.digitalReadPin(DigitalPin.P16) == value) { temp = true; }
+                break;
+            }
+        }
+        return temp;
+    }
+
+    /**
+     * Read the pitch or roll of the remote and map it to a specific output range.
+     */
+    //% block="remote motion %axis angle from %startAngle to %endAngle map to %outStart to %outEnd"
+    //% startAngle.defl=-90 endAngle.defl=90
+    //% outStart.defl=-255 outEnd.defl=255
+    //% inlineInputMode=inline
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=80
+    export function remoteMotion(axis: MAKEROBOTAxis, startAngle: number, endAngle: number, outStart: number, outEnd: number): number {
+        let angle = 0;
+        
+        if (axis == MAKEROBOTAxis.Pitch) {
+            angle = input.rotation(Rotation.Pitch);
+        } else {
+            angle = input.rotation(Rotation.Roll);
+        }
+        
+        let minAngle = Math.min(startAngle, endAngle);
+        let maxAngle = Math.max(startAngle, endAngle);
+        let constrainedAngle = Math.clamp(minAngle, maxAngle, angle);
+        
+        let mapped = pins.map(constrainedAngle, startAngle, endAngle, outStart, outEnd);
+        
+        let minOut = Math.min(outStart, outEnd);
+        let maxOut = Math.max(outStart, outEnd);
+        
+        return Math.clamp(minOut, maxOut, Math.trunc(mapped));
+    }
+    
+    /**
+     * Check if the remote is tilted in a specific direction (with a 30-degree deadzone).
+     */
+    //% block="remote tilted %direction"
+    //% subcategory="MAKEROBOT Remote"
+    //% weight=75
+    export function remoteTilted(direction: MAKEROBOTGyroDirection): boolean {
+        let pitch = input.rotation(Rotation.Pitch);
+        let roll = input.rotation(Rotation.Roll);
+
+        if (direction == MAKEROBOTGyroDirection.PitchForward) {
+            return pitch > 30;
+        } else if (direction == MAKEROBOTGyroDirection.PitchBackward) {
+            return pitch < -30;
+        } else if (direction == MAKEROBOTGyroDirection.RollLeft) {
+            return roll < -30;
+        } else if (direction == MAKEROBOTGyroDirection.RollRight) {
+            return roll > 30;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Use this block to check which command the robot received! (Or snap into a radio block to send it)
+     */
+    //% block="TRACER command %command"
+    //% subcategory="MAKEROBOT Remote"
+    //% group="TRACER Semi Auto"
+    //% weight=10
+    export function readTracerCommand(command: MAKEROBOTTracerCommand): number {
+        return command;
+    }
+
+    /**
+     * Use this block to check which command the BLITZ robot received! (Or snap into a radio block to send it)
+     */
+    //% block="BLITZ command %command"
+    //% subcategory="MAKEROBOT Remote"
+    //% group="BLITZ Remote"
+    //% weight=9
+    export function readBlitzCommand(command: MAKEROBOTBlitzCommand): number {
+        return command;
+    }
+
+
+    // ==========================================
+    // MAKEROBOT APPS (WEB BLUETOOTH CONTROLLER)
+    // ==========================================
+
+    /**
+     * Get the exact string command sent by the Tracer App Button.
+     */
+    //% block="Tracer App button %button is %state"
+    //% subcategory="MAKEROBOT Apps"
+    //% group="Tracer App"
+    //% weight=100
+    export function tracerAppButtonCommand(button: MAKEROBOTTracerAppButton, state: MAKEROBOTAppButtonState): string {
+        let btnStr = "";
+        switch(button) {
+            case MAKEROBOTTracerAppButton.Up: btnStr = "up"; break;
+            case MAKEROBOTTracerAppButton.Down: btnStr = "down"; break;
+            case MAKEROBOTTracerAppButton.Left: btnStr = "left"; break;
+            case MAKEROBOTTracerAppButton.Right: btnStr = "right"; break;
+            case MAKEROBOTTracerAppButton.Calibrate: btnStr = "cir"; break; // App sends 'cir' for the Tracer calibrate button
+        }
+        let stateStr = (state == MAKEROBOTAppButtonState.Pressed) ? "1" : "0";
+        return btnStr + stateStr;
+    }
+
+    /**
+     * Get the exact string command sent by the Blitz App Dual Joysticks.
+     */
+    //% block="Blitz App dual joystick %direction"
+    //% subcategory="MAKEROBOT Apps"
+    //% group="Blitz App"
+    //% weight=90
+    export function blitzAppJoystickCommand(direction: MAKEROBOTBlitzAppJoystick): string {
+        switch(direction) {
+            case MAKEROBOTBlitzAppJoystick.Forward: return "M_U";
+            case MAKEROBOTBlitzAppJoystick.Backward: return "M_D";
+            case MAKEROBOTBlitzAppJoystick.Left: return "M_L";
+            case MAKEROBOTBlitzAppJoystick.Right: return "M_R";
+            case MAKEROBOTBlitzAppJoystick.ForwardLeft: return "M_UL";
+            case MAKEROBOTBlitzAppJoystick.ForwardRight: return "M_UR";
+            case MAKEROBOTBlitzAppJoystick.BackwardLeft: return "M_DL";
+            case MAKEROBOTBlitzAppJoystick.BackwardRight: return "M_DR";
+            case MAKEROBOTBlitzAppJoystick.Neutral: return "M_N";
+        }
+        return "M_N";
+    }
+
+    /**
+     * Get the exact string command sent by the Blitz App Buttons.
+     */
+    //% block="Blitz App button %button is %state"
+    //% subcategory="MAKEROBOT Apps"
+    //% group="Blitz App"
+    //% weight=80
+    export function blitzAppButtonCommand(button: MAKEROBOTBlitzAppButton, state: MAKEROBOTAppButtonState): string {
+        let btnStr = "";
+        switch(button) {
+            case MAKEROBOTBlitzAppButton.Triangle: btnStr = "tri"; break;
+            case MAKEROBOTBlitzAppButton.Square: btnStr = "sq"; break;
+            case MAKEROBOTBlitzAppButton.Circle: btnStr = "cir"; break;
+            case MAKEROBOTBlitzAppButton.Cross: btnStr = "cross"; break;
+            case MAKEROBOTBlitzAppButton.Up: btnStr = "up"; break;
+            case MAKEROBOTBlitzAppButton.Down: btnStr = "down"; break;
+            case MAKEROBOTBlitzAppButton.Left: btnStr = "left"; break;
+            case MAKEROBOTBlitzAppButton.Right: btnStr = "right"; break;
+        }
+        let stateStr = (state == MAKEROBOTAppButtonState.Pressed) ? "1" : "0";
+        return btnStr + stateStr;
+    }
+
+    /**
+     * Format a label and number to send back to the App's Telemetry screen! 
+     * (Snap this inside a 'bluetooth uart write string' block)
+     */
+    //% block="App format telemetry label %label value %value"
+    //% label.defl="DIST"
+    //% subcategory="MAKEROBOT Apps"
+    //% group="App Telemetry"
+    //% weight=70
+    export function appTelemetryFormat(label: string, value: number): string {
+        return label + ":" + value + "#";
+    }
+
+
+    // ==========================================
     // INTERNAL FUNCTIONS (HIDDEN)
     // ==========================================
 
     function showTrimLed(): void {
-        // Map the -50 to 50 range onto the 5 horizontal LEDs
         let x = 2;
         if (robotTrim <= -20) x = 0;
         else if (robotTrim < 0) x = 1;
@@ -1219,9 +1353,8 @@ namespace MAKEROBOT {
         let pulse = pins.pulseIn(ultrasonicEchoPin, PulseValue.High, 255 * ultrasonicDivisor + 20000)
         let dist = pulse == 0 ? 255 : Math.idiv(pulse, ultrasonicDivisor)
 
-        // Ghost Echo Filter: If it was blocked, but now says clear, double check!
         if (dist > 20 && ultrasonicDistance <= 20) {
-            basic.pause(10) // wait for echoes to die down
+            basic.pause(10) 
             pins.digitalWritePin(ultrasonicTrigPin, 0)
             control.waitMicros(2)
             pins.digitalWritePin(ultrasonicTrigPin, 1)
