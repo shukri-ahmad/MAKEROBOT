@@ -354,7 +354,7 @@ namespace MAKEROBOT {
     //% block="Set to ISOBOT mode"
     //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Setup"
-    //% weight=110
+    //% weight=200
     export function setIsobotMode(): void {
         isIsobotMode = true;
     }
@@ -450,7 +450,7 @@ namespace MAKEROBOT {
     //% speed.min=0 speed.max=255 speed.defl=120
     //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Setup"
-    //% weight=100
+    //% weight=190
     export function robotCalibration(pin: MAKEROBOTCalibrationPin, speed: number): void {
         const motorSpeed = limit(speed, 0, 255)
         const calibrationPin = calibrationPinValue(pin)
@@ -745,7 +745,7 @@ namespace MAKEROBOT {
     //% speed.min=0 speed.max=255 speed.defl=150
     //% subcategory="MAKEROBOT Blitz"
     //% group="Movement"
-    //% weight=100
+    //% weight=180
     export function blitzRobotMove(direction: BLITZMove, speed: number = 150): void {
         const baseSpeed = limit(speed, 0, 255);
         let leftSpeed = baseSpeed;
@@ -877,7 +877,7 @@ namespace MAKEROBOT {
      */
     //% block="remote rocker %value"
     //% subcategory="MAKEROBOT Remote"
-    //% weight=100
+    //% weight=170
     export function remoteRocker(value: MAKEROBOTRocker): boolean {
         pins.setPull(DigitalPin.P8, PinPullMode.PullUp);
         let x = pins.analogReadPin(AnalogPin.P1);
@@ -1036,7 +1036,7 @@ namespace MAKEROBOT {
     //% block="Tracer App button %button is %state"
     //% subcategory="MAKEROBOT Apps"
     //% group="Tracer App"
-    //% weight=100
+    //% weight=160
     export function tracerAppButtonCommand(button: MAKEROBOTTracerAppButton, state: MAKEROBOTAppButtonState): string {
         let btnStr = "";
         switch(button) {
