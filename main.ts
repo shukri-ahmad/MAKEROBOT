@@ -299,10 +299,9 @@ enum MAKEROBOTBlitzAppJoystick {
     Neutral
 }
 
-
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["TRACER Junior", "TRACER Senior", "TRACER Expert", "BLITZ Robot", "MAKEROBOT Remote", "MAKEROBOT Apps"]
+//% subcategories=["MAKEROBOT Tracer Junior", "MAKEROBOT Tracer Senior", "MAKEROBOT Tracer Expert", "MAKEROBOT Blitz", "MAKEROBOT Remote", "MAKEROBOT Apps"]
 //% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto", "BLITZ Remote", "Tracer App", "Blitz App", "App Telemetry"]
 namespace MAKEROBOT {
     let lastError = 0
@@ -328,16 +327,12 @@ namespace MAKEROBOT {
     let ultrasonicTrigPin = DigitalPin.P1
     let ultrasonicEchoPin = DigitalPin.P2
     let ultrasonicDistance = 255
-    let ultrasonicEnabled = true // FOR KIDS: Sensor is now always awake!
+    let ultrasonicEnabled = true
     let ultrasonicDivisor = control.hardwareVersion() == "1" ? 39 : 58
     
-    // Robot Alignment (Trim)
     let robotTrim = 0
-    
-    // Chassis type flag (Default is 4-Wheel mode = false)
     let isIsobotMode = false;
 
-    // Ultrasonic Background Task
     control.inBackground(function () {
         while (true) {
             if (ultrasonicEnabled) {
@@ -357,7 +352,7 @@ namespace MAKEROBOT {
      * Switch the robot tuning to ISOBOT (2-wheel) mode. (Defaults to 4-wheel if this block is not used).
      */
     //% block="Set to ISOBOT mode"
-    //% subcategory="TRACER Junior"
+    //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Setup"
     //% weight=110
     export function setIsobotMode(): void {
@@ -366,10 +361,9 @@ namespace MAKEROBOT {
 
     /**
      * Calibrate the robot line sensor using default settings.
-     * In JS: juniorRobotCalibration(speed)
      */
     //% block="robot calibration"
-    //% subcategory="TRACER Junior"
+    //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Setup"
     //% weight=100
     export function juniorRobotCalibration(speed: number = 120): void {
@@ -378,17 +372,15 @@ namespace MAKEROBOT {
 
     /**
      * Follow the line until the robot reaches a cross or obstacle.
-     * Click '+' to override the default speed (0 = Auto: 200 for 4-Wheel, 180 for ISOBOT).
      */
     //% block="robot line follow until %until"
     //% speed.defl=0
-    //% subcategory="TRACER Junior"
+    //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Movement"
     //% weight=90
     export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 0, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
-        // AUTO-SPEED LOGIC
         let actualSpeed = speed;
         if (actualSpeed == 0) {
             actualSpeed = isIsobotMode ? 180 : 200;
@@ -398,11 +390,9 @@ namespace MAKEROBOT {
         
         if (finalDelay == 0) {
             if (isIsobotMode) {
-                // Original ISOBOT 2-Wheel Delay Map
                 finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 1200, 100));
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
-                // 4-Wheel Delay Map (+400ms added for extra cross clearance)
                 finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 400, 100)) + 400;
                 finalDelay = Math.clamp(50, 1400, finalDelay);
             }
@@ -419,7 +409,7 @@ namespace MAKEROBOT {
      * Check if an obstacle is detected within 15 cm.
      */
     //% block="obstacle detected < 15 cm"
-    //% subcategory="TRACER Junior"
+    //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Sensors"
     //% weight=85
     export function juniorObstacleDetected(): boolean {
@@ -429,15 +419,13 @@ namespace MAKEROBOT {
 
     /**
      * Go left or right from the current line position.
-     * Click '+' to override the default speed (0 = Auto: 200 for 4-Wheel, 180 for ISOBOT).
      */
     //% block="robot turn %move"
     //% speed.defl=0
-    //% subcategory="TRACER Junior"
+    //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Movement"
     //% weight=80
     export function robotTurn(move: MAKEROBOTMove, speed: number = 0): void {
-        // AUTO-SPEED LOGIC
         let actualSpeed = speed;
         if (actualSpeed == 0) {
             actualSpeed = isIsobotMode ? 180 : 200;
@@ -460,14 +448,13 @@ namespace MAKEROBOT {
     //% block="robot calibration pin %pin speed %speed"
     //% pin.defl=MAKEROBOTCalibrationPin.P9
     //% speed.min=0 speed.max=255 speed.defl=120
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Setup"
     //% weight=100
     export function robotCalibration(pin: MAKEROBOTCalibrationPin, speed: number): void {
         const motorSpeed = limit(speed, 0, 255)
         const calibrationPin = calibrationPinValue(pin)
 
-        // Choose timings based on chassis type flag
         const pauseShort = isIsobotMode ? 1000 : 2000;
         const pauseLong = isIsobotMode ? 2000 : 4000;
 
@@ -496,7 +483,7 @@ namespace MAKEROBOT {
     //% rightSpeed.min=-255 rightSpeed.max=255 rightSpeed.defl=0
     //% delay.min=0 delay.defl=0
     //% inlineInputMode=inline
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Movement"
     //% weight=90
     export function setMotorsSpeed(leftSpeed: number, rightSpeed: number, delay: number): void {
@@ -519,7 +506,7 @@ namespace MAKEROBOT {
     //% d4.defl=MAKEROBOTMakerLinePin.P13
     //% d5.defl=MAKEROBOTMakerLinePin.P12
     //% inlineInputMode=inline
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Setup"
     //% weight=80
     export function setMakerLine(d1: MAKEROBOTMakerLinePin, d2: MAKEROBOTMakerLinePin, d3: MAKEROBOTMakerLinePin, d4: MAKEROBOTMakerLinePin, d5: MAKEROBOTMakerLinePin): void {
@@ -537,7 +524,7 @@ namespace MAKEROBOT {
     //% trig.defl=MAKEROBOTUltrasonicPin.P1
     //% echo.defl=MAKEROBOTUltrasonicPin.P2
     //% inlineInputMode=inline
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Setup"
     //% weight=78
     export function setUltrasonic(trig: MAKEROBOTUltrasonicPin, echo: MAKEROBOTUltrasonicPin): void {
@@ -550,7 +537,7 @@ namespace MAKEROBOT {
      */
     //% block="line position on pin %pin"
     //% pin.defl=MAKEROBOTLinePin.P0
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Sensors"
     //% weight=76
     export function readLinePosition(pin: MAKEROBOTLinePin): number {
@@ -561,7 +548,7 @@ namespace MAKEROBOT {
      * Check if a specific type of intersection is currently detected by the Maker Line.
      */
     //% block="junction %junction detected"
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Sensors"
     //% weight=75
     export function junctionDetected(junction: MAKEROBOTJunction): boolean {
@@ -569,13 +556,10 @@ namespace MAKEROBOT {
         let rightExtreme = makerLineDetected(makerLineD5);
 
         if (junction == MAKEROBOTJunction.Cross) {
-            // Both outer sensors see black
             return leftExtreme && rightExtreme;
         } else if (junction == MAKEROBOTJunction.Left) {
-            // Only left outer sensor sees black
             return leftExtreme && !rightExtreme;
         } else if (junction == MAKEROBOTJunction.Right) {
-            // Only right outer sensor sees black
             return !leftExtreme && rightExtreme;
         }
         return false;
@@ -591,7 +575,7 @@ namespace MAKEROBOT {
     //% s4.defl=MAKEROBOTLineSignal.Off
     //% s5.defl=MAKEROBOTLineSignal.Off
     //% inlineInputMode=inline
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Sensors"
     //% weight=70
     export function lineDetectedOn(s1: MAKEROBOTLineSignal, s2: MAKEROBOTLineSignal, s3: MAKEROBOTLineSignal, s4: MAKEROBOTLineSignal, s5: MAKEROBOTLineSignal): boolean {
@@ -607,7 +591,7 @@ namespace MAKEROBOT {
      */
     //% block="obstacle detected < %distance cm"
     //% distance.defl=15
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Sensors"
     //% weight=55
     export function obstacleDetected(distance: number): boolean {
@@ -619,7 +603,7 @@ namespace MAKEROBOT {
      * Return distance measured by ultrasonic sensor in centimeters.
      */
     //% block="ultrasonic distance (cm)"
-    //% subcategory="TRACER Senior"
+    //% subcategory="MAKEROBOT Tracer Senior"
     //% group="Sensors"
     //% weight=50
     export function readUltrasonic(): number {
@@ -641,7 +625,7 @@ namespace MAKEROBOT {
     //% kd.defl=0.4
     //% ki.defl=0
     //% inlineInputMode=inline
-    //% subcategory="TRACER Expert"
+    //% subcategory="MAKEROBOT Tracer Expert"
     //% group="Setup"
     //% weight=100
     //% blockHidden=true
@@ -663,7 +647,7 @@ namespace MAKEROBOT {
     //% cross.defl=true
     //% stopTimer.min=0 stopTimer.defl=0
     //% inlineInputMode=inline
-    //% subcategory="TRACER Expert"
+    //% subcategory="MAKEROBOT Tracer Expert"
     //% group="Movement"
     //% weight=90
     //% blockHidden=true
@@ -679,7 +663,7 @@ namespace MAKEROBOT {
     //% speed.min=0 speed.max=255 speed.defl=180
     //% pin.defl=MAKEROBOTLinePin.P0
     //% inlineInputMode=inline
-    //% subcategory="TRACER Expert"
+    //% subcategory="MAKEROBOT Tracer Expert"
     //% group="Movement"
     //% weight=80
     //% blockHidden=true
@@ -691,7 +675,7 @@ namespace MAKEROBOT {
      * Stop the robot.
      */
     //% block="robot stop"
-    //% subcategory="TRACER Expert"
+    //% subcategory="MAKEROBOT Tracer Expert"
     //% group="Movement"
     //% weight=70
     //% blockHidden=true
@@ -710,7 +694,7 @@ namespace MAKEROBOT {
      * Enter alignment calibration mode. Press A/B to adjust trim, and Logo or A+B to save and exit.
      */
     //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
-    //% subcategory="BLITZ Robot"
+    //% subcategory="MAKEROBOT Blitz"
     //% group="Setup"
     //% weight=105
     export function blitzCalibrateAlignment(): void {
@@ -759,7 +743,7 @@ namespace MAKEROBOT {
      */
     //% block="BLITZ robot move %direction at speed %speed"
     //% speed.min=0 speed.max=255 speed.defl=150
-    //% subcategory="BLITZ Robot"
+    //% subcategory="MAKEROBOT Blitz"
     //% group="Movement"
     //% weight=100
     export function blitzRobotMove(direction: BLITZMove, speed: number = 150): void {
@@ -796,7 +780,7 @@ namespace MAKEROBOT {
     //% block="BLITZ robot move %direction cornering %corner radius(0-100) %radius speed %speed"
     //% speed.min=0 speed.max=255 speed.defl=150
     //% radius.min=0 radius.max=100 radius.defl=50
-    //% subcategory="BLITZ Robot"
+    //% subcategory="MAKEROBOT Blitz"
     //% group="Movement"
     //% weight=95
     export function blitzRobotCorner(direction: BLITZDirection, corner: BLITZCorner, radius: number, speed: number): void {
@@ -833,7 +817,7 @@ namespace MAKEROBOT {
      * Stop and brake all BLITZ robot motors immediately.
      */
     //% block="BLITZ robot brake"
-    //% subcategory="BLITZ Robot"
+    //% subcategory="MAKEROBOT Blitz"
     //% group="Movement"
     //% weight=90
     export function blitzRobotBrake(): void {
@@ -845,7 +829,7 @@ namespace MAKEROBOT {
      */
     //% block="BLITZ robot mecanum %direction at speed %speed"
     //% speed.min=0 speed.max=255 speed.defl=150
-    //% subcategory="BLITZ Robot"
+    //% subcategory="MAKEROBOT Blitz"
     //% group="Mecanum"
     //% weight=80
     export function blitzRobotMecanum(direction: BLITZMecanum, speed: number = 150): void {
@@ -1060,7 +1044,7 @@ namespace MAKEROBOT {
             case MAKEROBOTTracerAppButton.Down: btnStr = "down"; break;
             case MAKEROBOTTracerAppButton.Left: btnStr = "left"; break;
             case MAKEROBOTTracerAppButton.Right: btnStr = "right"; break;
-            case MAKEROBOTTracerAppButton.Calibrate: btnStr = "cir"; break; // App sends 'cir' for the Tracer calibrate button
+            case MAKEROBOTTracerAppButton.Calibrate: btnStr = "cir"; break;
         }
         let stateStr = (state == MAKEROBOTAppButtonState.Pressed) ? "1" : "0";
         return btnStr + stateStr;
@@ -1123,7 +1107,6 @@ namespace MAKEROBOT {
     export function appTelemetryFormat(label: string, value: number): string {
         return label + ":" + value + "#";
     }
-
 
     // ==========================================
     // INTERNAL FUNCTIONS (HIDDEN)
