@@ -61,7 +61,6 @@ enum MAKEROBOTLineSignal {
     Any
 }
 
-// --- NEW JUNCTION ENUM ---
 enum MAKEROBOTJunction {
     //% block="cross / t-junction"
     Cross,
@@ -99,7 +98,7 @@ enum MAKEROBOTTurnDirection {
     Right
 }
 
-// --- NEW REMOTE ENUMS ---
+// --- REMOTE ENUMS ---
 enum MAKEROBOTTracerCommand {
     //% block="UP"
     Up = 1,
@@ -197,7 +196,7 @@ enum MAKEROBOTGyroDirection {
     RollRight
 }
 
-// --- NEW BLITZ ROBOT ENUMS ---
+// --- BLITZ ROBOT ENUMS ---
 enum BLITZMove {
     //% block="forward"
     Forward,
@@ -299,9 +298,41 @@ enum MAKEROBOTBlitzAppJoystick {
     Neutral
 }
 
+// --- SERVO ENUMS ---
+enum MAKEROBOTServo {
+    //% block="S1"
+    S1 = 0,
+    //% block="S2"
+    S2 = 1,
+    //% block="S3"
+    S3 = 2,
+    //% block="S4"
+    S4 = 3,
+    //% block="S5"
+    S5 = 4,
+    //% block="S6"
+    S6 = 5,
+    //% block="S7"
+    S7 = 6,
+    //% block="S8"
+    S8 = 7
+}
+
+enum MAKEROBOTServoSpeed {
+    //% block="slow"
+    Slow = 1,
+    //% block="medium"
+    Medium = 2,
+    //% block="fast"
+    Fast = 3,
+    //% block="instant"
+    Instant = 4
+}
+
+
 //% color=#3455db icon="\uf1b9"
 //% block="MAKEROBOT"
-//% subcategories=["MAKEROBOT Tracer Junior", "MAKEROBOT Tracer Senior", "MAKEROBOT Tracer Expert", "MAKEROBOT Blitz", "MAKEROBOT Remote", "MAKEROBOT Apps"]
+//% subcategories=["MAKEROBOT Tracer Junior", "MAKEROBOT Tracer Senior", "MAKEROBOT Tracer Expert", "MAKEROBOT Blitz", "MAKEROBOT Remote", "MAKEROBOT Apps", "MAKEROBOT Servo"]
 //% groups=["Setup", "Movement", "Sensors", "Semi Auto", "Mecanum", "TRACER Semi Auto", "BLITZ Remote", "Tracer App", "Blitz App", "App Telemetry"]
 namespace MAKEROBOT {
     let lastError = 0
@@ -332,6 +363,12 @@ namespace MAKEROBOT {
     
     let robotTrim = 0
     let isIsobotMode = false;
+
+    // Servo State Tracking
+    let currentServoAngles = [-1, -1, -1, -1, -1, -1, -1, -1];
+    let targetServoAngles = [-1, -1, -1, -1, -1, -1, -1, -1];
+    let servoSweeping = [false, false, false, false, false, false, false, false];
+    const servoStepSizes = [2, 5, 10]; // Kinematics mapped to 20ms delay
 
     control.inBackground(function () {
         while (true) {
@@ -365,7 +402,7 @@ namespace MAKEROBOT {
     //% block="robot calibration"
     //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Setup"
-    //% weight=100
+    //% weight=195
     export function juniorRobotCalibration(speed: number = 120): void {
         robotCalibration(MAKEROBOTCalibrationPin.P9, speed)
     }
@@ -377,7 +414,7 @@ namespace MAKEROBOT {
     //% speed.defl=0
     //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Movement"
-    //% weight=90
+    //% weight=190
     export function robotLineFollowUntil(until: MAKEROBOTLineFollowUntil, speed: number = 0, stopDelay: number = 0): void {
         setPidTuning(500, 0.6, 0.4, 0)
         
@@ -411,7 +448,7 @@ namespace MAKEROBOT {
     //% block="obstacle detected < 15 cm"
     //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Sensors"
-    //% weight=85
+    //% weight=185
     export function juniorObstacleDetected(): boolean {
         ultrasonicEnabled = true;
         return ultrasonicDistance < 15;
@@ -424,7 +461,7 @@ namespace MAKEROBOT {
     //% speed.defl=0
     //% subcategory="MAKEROBOT Tracer Junior"
     //% group="Movement"
-    //% weight=80
+    //% weight=180
     export function robotTurn(move: MAKEROBOTMove, speed: number = 0): void {
         let actualSpeed = speed;
         if (actualSpeed == 0) {
@@ -696,7 +733,7 @@ namespace MAKEROBOT {
     //% block="BLITZ calibrate alignment (A/B to adjust, Logo to save)"
     //% subcategory="MAKEROBOT Blitz"
     //% group="Setup"
-    //% weight=105
+    //% weight=180
     export function blitzCalibrateAlignment(): void {
         while (input.buttonIsPressed(Button.A) || input.buttonIsPressed(Button.B) || input.logoIsPressed()) {
             basic.pause(10);
@@ -745,7 +782,7 @@ namespace MAKEROBOT {
     //% speed.min=0 speed.max=255 speed.defl=150
     //% subcategory="MAKEROBOT Blitz"
     //% group="Movement"
-    //% weight=180
+    //% weight=100
     export function blitzRobotMove(direction: BLITZMove, speed: number = 150): void {
         const baseSpeed = limit(speed, 0, 255);
         let leftSpeed = baseSpeed;
@@ -1108,6 +1145,76 @@ namespace MAKEROBOT {
         return label + ":" + value + "#";
     }
 
+
+    // ==========================================
+    // MAKEROBOT SERVO BLOCKS
+    // ==========================================
+
+    /**
+     * Move a servo to a specific angle at a controlled speed without pausing the rest of the code!
+     */
+    //% block="set servo %servo to %angle degrees at speed %speed"
+    //% angle.min=0 angle.max=180 angle.defl=90
+    //% subcategory="MAKEROBOT Servo"
+    //% weight=150
+    export function setServoSpeed(servo: MAKEROBOTServo, angle: number, speed: MAKEROBOTServoSpeed): void {
+        let safeAngle = limit(angle, 0, 180);
+        let sIdx = servo as number;
+        let mbChannel = getMotionBitServo(servo);
+
+        // If Instant OR the servo's current position is unknown (first boot)
+        if (speed === MAKEROBOTServoSpeed.Instant || currentServoAngles[sIdx] === -1) {
+            motionbit.setServoPosition(mbChannel, safeAngle);
+            currentServoAngles[sIdx] = safeAngle;
+            targetServoAngles[sIdx] = safeAngle;
+            return;
+        }
+
+        // Set the new target for the background loop to chase
+        targetServoAngles[sIdx] = safeAngle;
+
+        // If a sweep loop isn't already running for this specific servo, spawn one!
+        if (!servoSweeping[sIdx]) {
+            servoSweeping[sIdx] = true;
+
+            control.inBackground(function () {
+                while (currentServoAngles[sIdx] !== targetServoAngles[sIdx]) {
+                    
+                    let stepSize = servoStepSizes[speed - 1]; // Speed Enum starts at 1
+                    let diff = targetServoAngles[sIdx] - currentServoAngles[sIdx];
+                    let direction = diff > 0 ? 1 : -1;
+
+                    // If we are close enough, snap to the final target
+                    if (Math.abs(diff) <= stepSize) {
+                        currentServoAngles[sIdx] = targetServoAngles[sIdx];
+                    } else {
+                        currentServoAngles[sIdx] += (direction * stepSize);
+                    }
+
+                    motionbit.setServoPosition(mbChannel, currentServoAngles[sIdx]);
+                    basic.pause(20); // 50Hz jitter-free heartbeat
+                }
+                
+                // Target reached, kill the loop
+                servoSweeping[sIdx] = false;
+            });
+        }
+    }
+
+    /**
+     * Disable the PWM signal to the servo so it goes limp (Useful for posing the robot arm by hand).
+     */
+    //% block="disable servo %servo"
+    //% subcategory="MAKEROBOT Servo"
+    //% weight=140
+    export function disableServo(servo: MAKEROBOTServo): void {
+        let sIdx = servo as number;
+        // Wipe the memory so the next move command snaps safely
+        currentServoAngles[sIdx] = -1;
+        targetServoAngles[sIdx] = -1;
+        motionbit.disableServo(getMotionBitServo(servo));
+    }
+
     // ==========================================
     // INTERNAL FUNCTIONS (HIDDEN)
     // ==========================================
@@ -1423,6 +1530,20 @@ namespace MAKEROBOT {
         } else {
             return DigitalPin.P9
         }
+    }
+
+    function getMotionBitServo(servo: MAKEROBOTServo): MotionBitServoChannel {
+        switch(servo) {
+            case MAKEROBOTServo.S1: return MotionBitServoChannel.S1;
+            case MAKEROBOTServo.S2: return MotionBitServoChannel.S2;
+            case MAKEROBOTServo.S3: return MotionBitServoChannel.S3;
+            case MAKEROBOTServo.S4: return MotionBitServoChannel.S4;
+            case MAKEROBOTServo.S5: return MotionBitServoChannel.S5;
+            case MAKEROBOTServo.S6: return MotionBitServoChannel.S6;
+            case MAKEROBOTServo.S7: return MotionBitServoChannel.S7;
+            case MAKEROBOTServo.S8: return MotionBitServoChannel.S8;
+        }
+        return MotionBitServoChannel.S1;
     }
 
     function resetPid(): void {
