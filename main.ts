@@ -430,7 +430,8 @@ namespace MAKEROBOT {
                 finalDelay = Math.trunc(pins.map(actualSpeed, 0, 255, 1200, 100));
                 finalDelay = Math.clamp(50, 2000, finalDelay);
             } else {
-                finalDelay = 50;
+                // FIXED DELAY TO 100ms FOR 4-WHEEL MAKEROBOT
+                finalDelay = 100;
             }
         }
 
